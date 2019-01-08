@@ -135,6 +135,7 @@ function tstatep(desc)
     if target == nil then
         return false
     end
+    --print(desc)
     return GetTypeTime(tbuffList, desc) > 0
 end
 function tstate(desc)
@@ -229,72 +230,67 @@ function getWeight()
     if GetBuffTime(tbuffList, wudi) > 0 then
         weight = weight + 100
     end
-    if GetBuffTime(tbuffList, jianshang80) > 0 then
-        weight = weight + 8
-        --OutputinGame("jianshang80")
+    if tstatep("无敌") then		--如果目标可控制
+        weight= weight +100
     end
-    if GetBuffTime(tbuffList, jianshang70) > 0 then
-        weight = weight + 7
-        --OutputinGame("jianshang70")
+    if tstatep("不死") then		--如果目标可控制
+        weight= weight +100
     end
-    if GetBuffTime(tbuffList, jianshang60) > 0 then
-        weight = weight + 6
-        --OutputinGame("jianshang60")
-
-    end
-    if GetBuffTime(tbuffList, jianshang50) > 0 then
-        weight = weight + 5
-        --OutputinGame("jianshang50")
-    end
-    if GetBuffTime(tbuffList, jianshang40) > 0 then
-        weight = weight + 4
-        --OutputinGame("jianshang40")
-    end
+    --if tstatep("减伤30") then		--如果目标可控制
+    --    weight= weight +3
+    --end
     if GetBuffTime(tbuffList, jianshang30) > 0 then
         weight = weight + 3
-        --OutputinGame("jianshang30")
     end
     if GetBuffTime(tbuffList, jianshang20) > 0 then
         weight = weight + 2
-        --OutputinGame("jianshang20")
     end
     if GetBuffTime(tbuffList, jianshang10) > 0 then
         weight = weight + 1
-        --OutputinGame("jianshang10")
     end
-    if GetBuffTime(tbuffList, shanbi80) > 0 then
-        weight = weight + 8
-        --OutputinGame("shanbi80")
+    if tstatep("减伤40") then		--如果目标可控制
+        weight= weight +4
     end
-    if GetBuffTime(tbuffList, shanbi60) > 0 then
-        weight = weight + 6
-        --OutputinGame("shanbi60")
+    if tstatep("减伤50") then		--如果目标可控制
+        weight= weight +5
     end
-    if GetBuffTime(tbuffList, shanbi50) > 0 then
-        weight = weight + 5
-        --OutputinGame("shanbi50")
+    if tstatep("减伤60") then		--如果目标可控制
+        weight= weight +6
     end
-    if GetBuffTime(tbuffList, shanbi40) > 0 then
-        weight = weight + 4
-        --OutputinGame("shanbi40")
+    if tstatep("减伤70") then		--如果目标可控制
+        weight= weight +7
     end
-    if GetBuffTime(tbuffList, shanbi30) > 0 then
-        weight = weight + 3
-        --OutputinGame("shanbi30")
+    if tstatep("减伤80") then		--如果目标可控制
+        weight= weight +8
     end
-    if GetBuffTime(tbuffList, shanbi20) > 0 then
-        weight = weight + 2
-        --OutputinGame("shanbi20")
+    if tstatep("减伤90") then		--如果目标可控制
+        weight= weight +9
+    end
+    if tstatep("闪避20") then		--如果目标可控制
+        weight= weight +2
+    end
+    if tstatep("闪避30") then		--如果目标可控制
+        weight= weight +3
+    end
+    if tstatep("闪避40") then		--如果目标可控制
+        weight= weight +4
+    end
+    if tstatep("闪避50") then		--如果目标可控制
+        weight= weight +5
+    end
+    if tstatep("闪避60") then		--如果目标可控制
+        weight= weight +6
+    end
+    if tstatep("闪避70") then		--如果目标可控制
+        weight= weight +7
+    end
+    if tstatep("闪避100") then		--如果目标可控制
+        weight= weight +100
     end
     if GetBuffTime(tbuffList, shanbi10) > 0 then
         weight = weight + 1
-        --OutputinGame("shanbi10")
     end
 
-    if GetBuffTime(tbuffList, jianliao) > 0 then
-        weight = weight - 3
-        --OutputinGame("shanbi10")
-    end
     if tstatep("沉默") then		--如果目标可控制
         weight= weight -3
     end
@@ -1267,11 +1263,11 @@ function tab(weight)
     --	print("探梅完了")
     --end
     -----上次切换目标大于5秒才会换目标
-    --if weight>=15 and (GetTickCount() - lastSelectTime)>5000 then
-    --	print("目标减伤过高")
-    --	lastSelectTime = GetTickCount()
-    --	findTarget(true)
-    --end
+    if weight>=50 and (GetTickCount() - lastSelectTime)>5000 then
+    	print("目标减伤过高")
+    	lastSelectTime = GetTickCount()
+    	findTarget(true)
+    end
 
     if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
         print("危险区域切换目标")
