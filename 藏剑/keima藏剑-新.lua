@@ -10,6 +10,8 @@ local ttbuffList
 local gcdsj = 0.2 --gcd时间
 local help = false
 local lastSelectTime = 0
+local isprint = true
+--local youxian3 ={}
 
 function ota(desc)
     local mota, motatime, motaratio = GetPrepare()
@@ -59,11 +61,22 @@ function skill(skillid)
     --print(skillid)
     Cast(skillid, false, false)
 end
+function skillEX(skillid)
+    ---打断当前读条
+    CastTo(skillid,target,true)
+end
+function skillEX2(skillid)
+    ---打断当前读条
+    Cast(skillid,true,true)
+end
 function dis()
     return GetDist(target)
 end
 function his()
-    return GetHeight(target)
+    if target == nil then
+        return 0
+    end
+        return GetHeight(target)
 end
 function dis2()
     return GetDist2D(target)
@@ -277,29 +290,32 @@ function getWeight()
         weight = weight + 1
         --OutputinGame("shanbi10")
     end
-    --if GetBuffTime(tbuffList,miankong) then
-    --    weight = weight + 4
-    --    --OutputinGame("shanbi10")
-    --end
-    --if GetBuffTime(tbuffList,jiaoxie) then
-    --	weight = weight -3
-    --	--OutputinGame("shanbi10")
-    --end
-    --if tstate("击倒|眩晕|定身|锁足|僵直") then
-    --	weight = weight -3
-    --end
 
-
-    --if tstatep("免控") then		--如果目标可控制
-    --    weight= weight +5
-    --end
     if GetBuffTime(tbuffList, jianliao) > 0 then
         weight = weight - 3
         --OutputinGame("shanbi10")
     end
-    --if tstatep("有封轻功") then		--如果目标可控制
-    --    weight= weight -3
-    --end
+    if tstatep("沉默") then		--如果目标可控制
+        weight= weight -3
+    end
+    if tstatep("缴械") then		--如果目标可控制
+        weight= weight -3
+    end
+    if tstatep("封内") then		--如果目标可控制
+        weight= weight -3
+    end
+    if tstatep("禁疗") then		--如果目标可控制
+        weight= weight -3
+    end
+    if tstatep("定身") then		--如果目标可控制
+        weight= weight -1
+    end
+    if tstatep("眩晕") then		--如果目标可控制
+        weight= weight -1
+    end
+    if tstatep("击倒") then		--如果目标可控制
+        weight= weight -2
+    end
     --if GetBuffTime(tbuffList,chenmo) then
     --	weight = weight -3
     --	--OutputinGame("shanbi10")
@@ -427,8 +443,12 @@ end
 function cdEX(skill)
     ---通过已经释放的技能时间来判断技能是否cd
     --if skill()
-    --print(skill,GetSkillSCD(skill))
+    print(skill)
     return GetSkillSCD(skill) > 0
+end
+function cdEX2(skill)
+    ---充能技能判断
+    return GetSkillCN(skill)==0
 end
 
 function kongzhiTimeEX(time)
@@ -550,24 +570,24 @@ function zuiyue()
 end
 
 function xiaori(weight)
-    if cdEX("啸日") then
+    ---啸日
+    if cdEX2("啸日") then
         return false
     end
-    ---啸日
     if mount("问水诀") then
         if buff("梦泉虎跑") then
             return false
         end
         if rseeme(25) > 0 and statep("免控") == false and cdEX("梦泉虎跑") and cdEX("玉泉鱼跃") then
-            print("rseeme(25)>0 ")
+            --print("rseeme(25)>0 ")
             return true
         end
         if this_player.nCurrentRage >= 90 and statep("免控") == false and dis() <= 4 then
-            print("this_player.nCurrentRage>=90")
+            --print("this_player.nCurrentRage>=90")
             return true
         end
         if state("击倒|眩晕|定身|锁足|僵直") and (weight <= 8 or life() <= 70) then
-            print("state(击倒|眩晕|定身|锁足|僵直)")
+            --print("state(击倒|眩晕|定身|锁足|僵直)")
             return true
         end
         return false
@@ -599,7 +619,7 @@ function yunfeiyuhuang(weight)
     if buff("夜雨") and (weight < 10 or bufftime("夜雨") < 2) then
         return true
     end
-    if dis() <= 4 and (tstate("站立|僵直|收招|锁足") or (tstate("跑动") and target.nRunSpeed <= 21) or kongzhiTimeEX(1.44)) then
+    if dis() <= 4 and  kongzhiTimeEX(1.44) then
         return true
     end
     return false
@@ -661,10 +681,10 @@ function fengchayunjing(weight)
     if cdEX("云飞玉皇") or weight > 8  then
         return false
     end
-    if weight >= 6 and weight <= 8 and buff("凤鸣") then
+    if weight >= 6 and weight <= 8 and buff("凤鸣")  and (tstatep("免控") or (cdEX("惊涛") and cdEX("醉月"))) then
         return true
     end
-    if weight <= 2 then
+    if weight <= 2 and (tstatep("免控") or (cdEX("惊涛") and cdEX("醉月"))) then
         return true
     end
     return false
@@ -677,11 +697,11 @@ function yingmingliu(weight)
     if this_player.nCurrentRage < 10 and mount("山居剑意") then
         return true
     end
-    if weight <= 5 then
+    if weight <= 5 and mount("山居剑意") then
         print("莺鸣", weight)
         return true
     end
-    if life() < 20 then
+    if life() < 10 then
         return true
     end
     return false
@@ -737,12 +757,12 @@ function jingtao()
     if HaveTalent("惊涛") == false or this_player.nCurrentRage < 10 or cdEX("惊涛") or dis() > 8 or tstatep("免控") then
         return false
     end
-    if tnostate("冲刺") and tstate("定身|爬起") and jiekong() and jiekongTimeEX3(0.5) then
-        print("惊涛1111")
+    if tnostate("冲刺") and tstate("定身|爬起") and jiekong()then
+        --print("惊涛1111")
         return true
     end
     if tnostate("冲刺") and tstatep("免控") == false and tstate("击倒|倒地|眩晕|定身") == false then
-        print("惊涛2222")
+        --print("惊涛2222")
         return true
     end
     --print(tstate("击倒|倒地|眩晕|定身"))
@@ -756,7 +776,7 @@ function xieliubaoshi(weight)
     end
     -- 内功列表："洗髓经","易筋经","紫霞功","太虚剑意","花间游","离经易道","傲血战意","铁牢律","云裳心经","冰心诀","问水诀","山居剑意","毒经","补天诀","惊羽诀","天罗诡道","焚影圣诀","明尊琉璃体","铁骨衣","分山劲","笑尘诀","莫问","相知","北傲诀"
 
-    if (weight <= 10 or tmount("补天诀|离经易道|相知|云裳心经")) and kongzhiTimeEX(2) then
+    if (weight <= 10 or tmount("补天诀|离经易道|相知|云裳心经")) and kongzhiTimeEX(1) then
         return true
     end
     if weight <= 6 then
@@ -807,7 +827,7 @@ function songshewenxia(weight)
     --	end
     --end
 
-    if his() > 8 and tstatep("免控") == false then
+    if his() > 8 and tstatep("免控") == false  then
         return true
     end
     if buff("凤鸣") then
@@ -898,13 +918,17 @@ function shanjujianyi(weight)
     if fengchayunjing(weight) then
         print("峰插云景")
 
-        skill("峰插云景")
+        skillEX2("峰插云景")
     end
     ---风来吴山
     if fenglaiwushan(weight) then
         print("风来吴山")
-
-        skill("风来吴山")
+        skillEX2("风来吴山")
+        return 1
+    end
+    if yunfeiyuhuang(weight) then
+        print("云飞玉皇")
+        CastTo("云飞玉皇", target, false)
     end
     ---鹤归孤山
     if heguigushan() then
@@ -913,14 +937,11 @@ function shanjujianyi(weight)
         CastTo("鹤归孤山", target, false)
     end
     ---云飞玉皇
-    if yunfeiyuhuang(weight) then
-        print("云飞玉皇")
-        CastTo("云飞玉皇", target, false)
-    end
+
     if songshewenxia(weight) then
         print("松舍问霞")
 
-        skill("松舍问霞")
+        skillEX("松舍问霞")
     end
 
     ---夕照雷锋
@@ -931,7 +952,7 @@ function shanjujianyi(weight)
     ---啸日
     if xiaori(weight) then
         print("啸日")
-        Cast("啸日", true)
+        Cast("啸日", true,false)
     end
 
 
@@ -954,7 +975,7 @@ function DPS(weight)
     end
     ---云稀松
     if yunxisong() then
-        Cast("云栖松", true, false)
+        Cast("云栖松", true, true)
     end
     ---探梅
     if tanmei() then
@@ -1163,13 +1184,24 @@ function findTargetforRange(range)
 end
 
 function tab(weight)
-    if target == nil or objState(target, "重伤") or IsParty(target) then
+    if objState(target, "重伤")  then
         findTargetforRange(30)
         print("目标重伤")
 
     end
-
-    --if life() <=40 then
+    if IsParty(target) then
+        if target ~=nil then
+            SetTarget(save_target)
+        end
+    else
+        if target ~=nil then
+            save_target = target
+        end
+    end
+    if  target == nil and save_target~=nil then
+        save_target = target
+    end
+        --if life() <=40 then
     --	local naima = FindPlayer(40, "离经易道|云裳心经|补天诀|相知", "队友")
     --	if naima and GetDist(naima)>6 then
     --		SetTarget(naima)
@@ -1181,22 +1213,45 @@ function tab(weight)
     --		end
     --	end
     --end
-    if cdEX("探梅") == false and IsEnemy(target) then
+    if HaveTalent("探梅") and cdEX("探梅") == false then
         ---如果探梅没CD 并且目标是敌对
         local target
         --遍历队伍成员
         for k, v in ipairs(GetAllMember()) do
-            if IsPlayer(v.dwID) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+            if IsPlayer(v.dwID) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
                 local tate = GetState(v)
                 if string.find("眩晕|定身|爬起|僵直", tate) and objLife(v) < 90 then
                     --先保存当前对象
-                    CastTo("探梅", v, true)
+                    if ota("风来吴山") then
+                        CastTo("探梅", v, true)
+                    else
+                        CastTo("探梅", v, false)
+                    end
                     print("给探梅")
                     --return 1
                 end
             end
         end
-
+    end
+    if HaveTalent("松舍问霞") and cdEX("松舍问霞") == false  then
+        ---如果探梅没CD 并且目标是敌对
+        local target
+        --遍历队伍成员
+        for k, v in ipairs(GetAllMember()) do
+            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+                local tate = GetState(v)
+                if string.find("冲刺", tate) == false then
+                    --先保存当前对象
+                    if ota("风来吴山") then
+                        CastTo("松舍问霞", v, true)
+                    else
+                        CastTo("松舍问霞", v, false)
+                    end
+                    print("松舍问霞")
+                    --return 1
+                end
+            end
+        end
     end
     --print("当前目标是否是队友",IsParty(target))
     --if cdEX("探梅") and IsParty(target) and life() >40 then
@@ -1242,6 +1297,11 @@ function Main(player)
         local weight = getWeight()
         --print("weight:",weight)
         tab(weight)
+
+        if ota("云飞玉皇") then
+            MoveAction_StopAll()
+            return
+        end
         --跟随当前目标
         if IsDangerArea(target, "敌对") then
             MoveAction_StopAll()
@@ -1250,6 +1310,8 @@ function Main(player)
             toBack()
             TurnTo(target)
         end
+
+
 
         --if GetHeight(player)>0 then
         --	Jump()

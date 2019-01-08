@@ -72,8 +72,8 @@ function rseeme(seeme)
 end
 
 function state(desc)
-    local tstate = GetState(this_player)
-    return string.find(desc, tstate)
+    local tate = GetState(this_player)
+    return string.find(desc, tate)
 end
 function tstate(desc)
     if target ==nil then
