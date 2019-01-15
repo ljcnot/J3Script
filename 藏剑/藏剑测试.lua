@@ -1,12 +1,33 @@
-
+local laststate
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
-function Main(player)
-    --state = GetState(player)
-    --print(player.nRunSpeed)
-   --local target, tclass = GetTarget(player)
-    Cast("风来吴山",true,true)
+local this_player
+AddOption("风来吴山")
+AddOption("风来吴山2")
+AddOption("风来吴山3")
+function buff(list)
+   local mbuff = GetBuff(this_player)
+    return GetBuffTime(mbuff, list) > 0
+end
 
-    print(GetSkillSCD("梦泉虎跑"))
+function Main(player)
+    this_player = player
+    local state = GetState(player)
+    if laststate~=state then
+        laststate = state
+        print(state)
+    end
+
+    --print("执行前",GetTickCount())
+    --GetOption("风来吴山")
+    --GetOption("风来吴山2")
+    --GetOption("风来吴山3")
+    --print("执行后",GetTickCount())
+    --if GetSkillSCD("泉凝月")>0 then
+    --    print("泉凝月CD",GetTickCount())
+    --end
+    --if buff("泉凝月") then
+    --    print("泉凝月buff",GetTickCount())
+    --end
 end
 
 
@@ -25,12 +46,12 @@ function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)
     local myid = GetMyID()
     local duobi = {18322,1649,1647}
                ---鹤归孤山 醉月 惊涛
-    if dwSkillID == 123 and tIDnX == myid then  --如果是对我释放，这个是起跳阶段的技能ID
+    if dwSkillID == 3089 and tIDnX == myid then  --如果是对我释放，这个是起跳阶段的技能ID
         --如果过去的帧数小于4，总共8帧，大于4说明网速太差，已经躲不掉了
         --这里设为4只是演示，实战中要自己尝试
-        if nPastFrame < 4 then
-            Cast(9007)  --后跳
-        end
+        --if nPastFrame < 4 then
+            Cast("蹑云逐月",true,true)  --后跳
+        --end
     end
 
     --print(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)  --输出释放信息

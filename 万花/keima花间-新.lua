@@ -1,7 +1,6 @@
-AddOption("风来吴山")
-AddOption("自动绕背")
+
 AddOption("自动面向")
-AddOption("自动跟随")
+
 local save_target
 local target
 local tclass
@@ -15,11 +14,12 @@ local gcdsj = 0.2 --gcd时间
 local help = false
 local lastSelectTime = 0
 local isprint = true
-local isGensui= GetOption("自动跟随")
-local isRaobei= GetOption("自动绕背")
+
+
 local isMianxiang= GetOption("自动面向")
-local isFengche= GetOption("风来吴山")
---local youxian3 ={}
+
+local shangyangbuff ={}
+local yangmingbuff ={}
 
 function ota(desc)
     local mota, motatime, motaratio = GetPrepare()
@@ -28,6 +28,10 @@ end
 function tota(desc)
     local mota, motatime, motaratio = GetPrepare(target)
     return string.find(desc, mota)~=nil
+end
+function tIsota()
+    local mota, motatime, motaratio = GetPrepare(target)
+    return motatime>0
 end
 function objLife(obj)
     if obj == nil then
@@ -42,6 +46,13 @@ function life()
         return 999
     end
     local bfb = (this_player.nCurrentLife / this_player.nMaxLife) * 100
+    return bfb
+end
+function mana()
+    if this_player == nil then
+        return 999
+    end
+    local bfb = (this_player.nCurrentMana / this_player.nMaxMana) * 100
     return bfb
 end
 function tlife()
@@ -75,6 +86,18 @@ function tbuff(list)
     tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
 end
+function tbuffisme(list)
+    tbuffList = GetBuff(target)
+    return GetBuffTime(tbuffList, list,true) > 0
+end
+function tbufftime(list,time)
+    tbuffList = GetBuff(target)
+    return GetBuffTime(tbuffList, list,true) > 0 and GetBuffTime(tbuffList, list,true) <= time
+end
+function gettbufftime(list)
+    tbuffList = GetBuff(target)
+    return GetBuffTime(tbuffList, list,true)
+end
 function bufftime(id)
     mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, id)
@@ -84,6 +107,7 @@ function skill(skillid)
     Cast(skillid, false, false)
 end
 function skillEX(skillid)
+    print(skillid)
     ---打断当前读条
     CastTo(skillid,target,true)
 end
@@ -209,6 +233,12 @@ function lastSkill(skill,time)
     --5秒内放过指定技能，注意要判断大于等于0
     return time123 >= 0 and time123 < time
 end
+function qusan(obj)
+
+   return GetBuffType(obj,"阳性不利效果")>0 or GetBuffType(obj,"阴性不利效果")>0
+           or GetBuffType(obj,"混元性不利效果")>0 or GetBuffType(obj,"毒性不利效果")>0 or
+           GetBuffType(obj,"点穴不利效果")>0
+end
 ---权重计算
 function getWeight()
     --获取自己的buff数据
@@ -295,27 +325,6 @@ function getWeight()
         weight = weight+4
     end
     if tstatep("减伤30") then
-        weight = weight+3
-    end
-    if tstatep("闪避100") then
-        weight = weight+100
-    end
-    if tstatep("闪避70") then
-        weight = weight+7
-    end
-    if tstatep("闪避60") then
-        weight = weight+6
-    end
-    if tstatep("闪避50") then
-        weight = weight+5
-    end
-    if tstatep("闪避40") then
-        weight = weight+4
-    end
-    if tstatep("闪避30") then
-        weight = weight+3
-    end
-    if tstatep("闪避20") then
         weight = weight+3
     end
     if tstatep("沉默") then		--如果目标可控制
@@ -503,382 +512,205 @@ function noSkillTime(time)
     return (fengneiTime() > 0 and fengneiTime() > time) or (chenmoTime() > 0 and chenmoTime() > time) or (jiaoxieTime() > 0 and jiaoxieTime() > time)
 end
 function jiekong()
-    if (GetSkillGCD("醉月") + gcdsj) > dingshenTime() then
+    if (GetSkillGCD("芙蓉并蒂") + gcdsj) > dingshenTime() then
         return false
     end
-    if (GetSkillGCD("醉月") + gcdsj) > yunxuanTime() then
-        return false
-    end
-    return true
-end
-
-function tinglei()
-    ---听雷
-    if dis() > 4 then
-        return false
-    end
-    if buff("凤鸣") and this_player.nCurrentRage >= 10 then
+    if (GetSkillGCD("芙蓉并蒂") + gcdsj) > yunxuanTime() then
         return false
     end
     return true
 end
+function boom()
+    local count = 0
+    if gettbufftime("钟林毓秀")>10 then
+        count = count+1
+    end
+    if gettbufftime("兰摧玉折")>10 then
+        count = count+1
+    end
+    if gettbufftime("商阳指")>10 then
+        count = count+1
+    end
+    return count
+end
+function chunnihuhua()
+    ---春泥护花
+    if cdEX("春泥护花")  or statep("减伤") or statep("单次免伤") then
+        return false
+    end
+    if life()< 60 then
+        return true
+    end
+    return false
+end
+function yushijufen(weight)
+    ---玉石俱焚
+    if dis()>20 or cdEX("玉石俱焚") then
+        return false
+    end
+    if weight<=10 and boom()>=3 then
+        return true
+    end
+    if weight<=2 and boom()>=2 then
+        return true
+    end
+    return false
+end
+function furongbingdi()
+---芙蓉并蒂
+    if dis()>20 or cdEX("芙蓉并蒂") then
+        return false
+    end
 
-function hupao()
-    ---梦泉虎跑
-    if statep("免控") or cdEX("梦泉虎跑") then
-        return false
-    end
-    if rseeme(25) > 0 then
-        return true
-    end
-    if dis() > 4 then
-        return true
-    end
-    return false
-end
-function yuyue()
-    ---玉泉鱼跃
-    if dis() > 15 then
-        return true
-    end
-    if statep("免控") or buff("梦泉虎跑") then
-        return false
-    end
-    if cdEX("梦泉虎跑") and (rseeme(25) > 0 or dis() > 8) then
-        return true
-    end
-    return false
-end
-function yuhongguanri()
-
-    ---玉虹贯日
-    if dis() < 5 or dis() > 24 or cdEX("玉虹贯日") or tstate("冲刺") then
-        return false
-    end
-    if tota("任驰骋") then
-        return true
-    end
-    if dis()>15 then
-        return true
-    end
-    return false
-end
-
-function pinghuduanyue()
-    ---平湖断月
-    if dis() > 8 or cdEX("平湖断月") or tstate("冲刺") then
-        return false
-    end
-    if dis() >= 4 then
-        return true
-    end
-    --if totatype("right") or totatype("left") then
-    --	return true
-    --end
-    return false
-end
-function huanglongtucui()
-    ---黄龙吐翠
-    if dis() > 6 or cdEX("黄龙吐翠") then
-        return false
-    end
-    --if tstatep("免控")==false then
-    --	return true
-    --end
-    return true
-end
-function zuiyue()
-    ---醉月
-    if dis() > 6 or cdEX("醉月") or this_player.nCurrentRage < 10 or tstatep("免控") or tstatep("闪避") or (mount("山居剑意") and (HaveTalent("惊涛") ==false or cdEX("惊涛") == false)) then
-        return false
-    end
-    if tnostate("冲刺") and tstate("眩晕|定身") and jiekong() then
-        return true
-    end
-    if tnostate("冲刺") and tstatep("免控") == false and tstate("击倒|眩晕|定身") == false then
-        return true
-    end
-    return false
-end
-
-function xiaori(weight)
-    ---啸日
-    if cdEX2("啸日") or lastSkill(14910,1) or lastSkill(18322,1) or lastSkill(18322,1) or lastSkill(1580,1) or lastSkill(1589,1)  then
-        return false
-    end
-    if mount("问水诀") then
-        if dis() <= 4  and weight<=4 and (GetSkillCN("莺鸣柳")>0 or this_player.nCurrentRage >50) then
+    if tbufftime("钟林毓秀",13) or tbufftime("兰摧玉折",13) then
+        if tnostate("冲刺") and tstatep("免控")==false and tstate("定身") and jiekong()then
             return true
         end
-        if buff("梦泉虎跑") or buff("玉泉鱼跃") then
-            return false
-        end
-        if rseeme(25) > 0 and statep("免控") == false and GetSkillSCD("梦泉虎跑")>0.5 and GetSkillSCD("玉泉鱼跃")>0.5 then
-            --print("rseeme(25)>0 ")
+        if tnostate("冲刺") and tstatep("免控") == false and tstate("击倒|倒地|眩晕|定身") == false then
             return true
         end
+    end
+    return false
+end
+function lancuiyuzhe()
+    ---兰摧玉折
+    if dis()>20 or cdEX("兰摧玉折") then
+        return false
+    end
+    if (not tbuffisme("兰摧玉折") or tbufftime("兰摧玉折",8)) and (buff(412) or buff(8458))  then
+        return true
+    end
+    if state("站立") and not tbuffisme("兰摧玉折") or tbufftime("兰摧玉折",8) then
+        return true
+    end
+    return false
+end
+function zhonglingminxiu()
+    ---钟林毓秀
+    if dis()>20 or cdEX("钟林毓秀")  or lastSkill(189,4) then
+        return false
+    end
+    if  tbufftime("钟林毓秀",10) and (state("站立") or buff(412) or buff(8458))  then
+        return true
+    end
+    return false
+end
+function luansaqinghe(weight)
+    ---乱洒青荷
+    if dis()>20 or cdEX("乱洒青荷") then
+        return false
+    end
+    if weight<=6 and cdEX("玉石俱焚") then
+        return true
+    end
+    return false
+end
+function shuiyuewujian(weight)
+    ---水月无间
+    if dis()>20 or cdEX("水月无间") then
+        return false
+    end
+    if weight<=8 and tbuffisme("兰摧玉折") then
+        return true
+    end
+    if weight<=6 then
+        return true
+    end
+    return false
+end
 
-        if this_player.nCurrentRage >= 90 and statep("免控") == false and GetSkillSCD("梦泉虎跑")>0.5 and dis() <= 4 then
-            --print("this_player.nCurrentRage>=90")
-            return true
-        end
-        if state("击倒|眩晕|定身|锁足") and (weight <= 8 or life() <= 70) then
-            --print("state(击倒|眩晕|定身|锁足|僵直)")
-            return true
-        end
-        return false
-    else
-        if rseeme(25) > 0 and buff("啸日") == false then
-            return true
-        end
-        if dis() > 8 and GetSkillSCD("松舍问霞")>0.5 and GetSkillSCD("鹤归孤山")>0.5 and GetCastTime(this_player,14910)> 1 and GetCastTime(this_player,18322)> 1  then
-            return true
-        end
-        ---山居剑意
-        if this_player.nCurrentRage < 10 and GetSkillCN("莺鸣柳")==0 then
-            return true
-        end
+function yangmingzhi()
+    ---阳明指
+    if dis()>20 then
         return false
     end
-end
-function yunfeiyuhuang(weight)
-    ---云飞玉皇
-    if this_player.nCurrentRage < 20 or cdEX("云飞玉皇") then
-        return false
-    end
-    if dis() <= 23 and buff("云景") then
+    if not tbuffisme("钟林毓秀") and buff("放歌")then
         return true
     end
-    if dis() > 8 then
-        return false
-    end
-    if buff("夜雨") and (weight < 10 or bufftime("夜雨") < 2) then
-        return true
-    end
-    if dis() <= 4 and  kongzhiTimeEX(1) then
+    if cdEX("芙蓉并蒂") and  tbuffisme("芙蓉并蒂") and buff("放歌")then
         return true
     end
     return false
 end
-function xizhaoleifeng()
-    ---夕照雷锋
-    if dis() > 8 or this_player.nCurrentRage < 15 then
+function shangyangzhi()
+    ---商阳指
+    if dis()>20 then
         return false
     end
-    if dis() <= 4 and buff("凤鸣") then
-        return true
-    end
-    if dis() > 4 then
+    if not tbuffisme("商阳指") or tbufftime("商阳指",10)  then
         return true
     end
     return false
 end
-function heguigushan()
-    ---鹤归孤山
-    if dis() > 21 or cdEX("鹤归孤山") or this_player.nCurrentRage < 20 or tstate("冲刺") then
-        return false
-    end
-    if isPositive() and dis2() >= 6 and dis2() <= 20 then
-        return true
-    end
-    --if life()<40 then
-    --	return true
-    --end
-    return false
-end
-function fenglaiwushan(weight)
-    ---风来吴山
-    if  this_player.nCurrentRage < 50 or cdEX("风来吴山") then
-        return false
-    end
-    if dis() <=8 and (kongzhiTimeEX(1.5) or noSkillTime(1.5) or tota("千蝶吐瑞")) and weight <= 5 then
-        return true
-    end
-    if HaveTalent("层云") and dis() <=4 and target ~= nil and target.nRunSpeed < 22 and weight <= 5 then
-        return true
-    end
-    if HaveTalent("层云") == false and dis() <=4 and weight <= 5 then
-        return true
-    end
-    return false
-end
-function fengchayunjing(weight)
-    ---峰插云景
-    if dis() > 6 or this_player.nCurrentRage < 10 or cdEX("峰插云景") or tstatep("免推") then
-        return false
-    end
-    if target ~= nil and CastTime(2226, 4) then
 
-        return true
-    end
-    if ttarget ~= nil and IsParty(ttarget) and (ttlife() < 60 and ttstate("眩晕|定身") or ttlife()< 40)then
-        return true
-    end
-    if tbuff("枭泣|曳光") then
-        return true
-    end
-    if cdEX("云飞玉皇") or weight > 8 or tstate("眩晕|定身|爬起")  or lastSkill(1647,1) or lastSkill(1649,1) then
+function taiyinzhi(weight)
+    ---[太阴指]
+    if cdEX2("太阴指") then
         return false
     end
-    if weight >= 6 and weight <= 8 and buff("凤鸣")  and (tstatep("免控") or (tmount("山居剑意") and cdEX("惊涛") and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")) ) then
-        return true
-    end
-    if weight <= 2 and (tstatep("免控") or ((tmount("山居剑意") and cdEX("惊涛") and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")))) then
+    if state("眩晕|定身") and (weight <= 8 or life() <= 80)  then
         return true
     end
     return false
 end
-function yingmingliu(weight)
-    ---莺鸣柳
-    if buff("莺鸣") or dis() > 4 then
-        return false
-    end
-    if this_player.nCurrentRage < 10 and mount("山居剑意") then
-        return true
-    end
-    if weight <= 5 and mount("山居剑意") then
-        print("莺鸣", weight)
-        return true
-    end
-    if life() < 10 then
-        return true
-    end
-    return false
-end
---[[支持判断的集合：
-无免控、免控、无爆发、有爆发、无免伤、有免伤、无沉默、有沉默
-无减伤、有减伤、无闪避、有闪避、无减疗、有减疗、无减速、有减速
-无封内、有封内、无封轻功、有封轻功、可控制、可行动、非被控
-有免封内，无免封内，有免推，无免推，有免拉，无免拉
---]]
-function quanningyue()
-    ---泉凝月
-    if buff("梦泉虎跑") then
-        return true
-    end
-    -----泉凝月
-    if rseeme(25) == 0 then
-        return false
-    end
-    --if life()<80 then
-    --	return true
-    --end
-    return true
-end
-function yunxisong()
-    ---云稀松
-    if rseeme(25) < 1 or statep("免外伤") or statep("减伤") or statep("单次免伤") then
-        return false
-    end
-    if life() <= 50 then
-        return true
-    end
-    return false
-end
-function fengchuihe()
-    ---风吹荷
-    if HaveTalent("风吹荷") == false or cdEX("风吹荷") or dis() > 6 or tmount("补天诀|离经易道|相知|云裳心经") then
-        return false
-    end
-    if ttarget ~= nil and IsParty(ttarget) and ttlife() < 80 and ttstatep("封内") then
-        return true
-    end
-    if ttlife() <= 60 then
-        return true
-    end
-    if life() < 70 then
-        return true
-    end
-    return false
-end
-function jingtao()
-    ---惊涛
-    if HaveTalent("惊涛") == false or this_player.nCurrentRage < 10 or cdEX("惊涛") or dis() > 8 or tstatep("免控") or tstatep("闪避") then
-        return false
-    end
-    if tnostate("冲刺") and tstate("定身|爬起") and jiekong()then
-        --print("惊涛1111")
-        return true
-    end
-    if tnostate("冲刺") and tstatep("免控") == false and tstate("击倒|倒地|眩晕|定身") == false then
-        --print("惊涛2222")
-        return true
-    end
-    --print(tstate("击倒|倒地|眩晕|定身"))
-    return false
-end
-function xieliubaoshi(weight)
-    ---霞流宝石
-    if HaveTalent("霞流宝石") == false or cdEX("霞流宝石") or dis() > 5 or tstate("冲刺") or tstatep("免缴械") then
-        --print("霞流宝石")
-        return false
-    end
-    -- 内功列表："洗髓经","易筋经","紫霞功","太虚剑意","花间游","离经易道","傲血战意","铁牢律","云裳心经","冰心诀","问水诀","山居剑意","毒经","补天诀","惊羽诀","天罗诡道","焚影圣诀","明尊琉璃体","铁骨衣","分山劲","笑尘诀","莫问","相知","北傲诀"
-
-    if (weight <= 9 or tmount("补天诀|离经易道|相知|云裳心经")) and kongzhiTimeEX(1) then
-        return true
-    end
-    if weight <= 5 then
-        return true
-    end
-    return false
-end
-function tanmei()
-    ---探梅
-    if HaveTalent("探梅") == false or dis() > 15 or (ttarget ~= nil and IsParty(ttarget) and ttdis() > 15) then
-        return false
-    end
-    if target ~= nil and IsParty(target) then
-        return true
-    end
-    if ttarget ~= nil and IsParty(ttarget) and ttlife() < 80 and ttstate("眩晕|定身") then
-        return true
-    end
-    return false
-end
-function jiuximiyan()
-    ---九溪弥烟
-    if dis() > 4 then
+function qingxinjingqi()
+    ---清心静气
+    if buff("清心静气") then
         return false
     end
     return true
 end
-function songshewenxia(weight)
-    ---松舍问霞
-    if HaveTalent("松舍问霞") == false or dis() > 20 or cdEX("松舍问霞") or tstate("冲刺") then
+function qingfengchuilu()
+    ---[清风垂露]
+    if not  HaveTalent("清风垂露") or cdEX("清风垂露") then
         return false
     end
-    -- 内功列表："洗髓经","易筋经","紫霞功","太虚剑意","花间游","离经易道","傲血战意","铁牢律","云裳心经","冰心诀","问水诀","山居剑意","毒经","补天诀","惊羽诀","天罗诡道","焚影圣诀","明尊琉璃体","铁骨衣","分山劲","笑尘诀","莫问","相知","北傲诀"
-    --print("tmount")
-    --if tmount("惊羽诀|天罗诡道|莫问|相知|凌海决")then
-    --	--if buff("凤鸣") then
-    --	--	return true
-    --	--end
-    --
-    --else
-    --
-    --	if dis()>8 then
-    --		return true
-    --	end
-    --
-    --	if weight<8 then
-    --		return true
-    --	end
-    --end
-
-    if his() > 8 and tstatep("免控") == false  then
+    if qusan(mbuff) then
         return true
     end
-    --if buff("凤鸣") then
-    --    return true
-    --end
-    if dis() > 8 then
+    return false
+end
+function jueyinzhi()
+    ---厥阴指
+    if not HaveTalent("厥阴指") or cdEX("厥阴指") then
+        return false
+    end
+    if tIsota() then
         return true
     end
-    if weight <= 5 then
+    return false
+end
+function nanfengtuyue()
+    ---南风吐月
+    if not HaveTalent("南风吐月") or cdEX("南风吐月") then
+        return false
+    end
+    if life()<=30 and not statep("无敌") and not statep("减伤80") then
         return true
     end
-
+    return false
+end
+function xinglouyueying(weight)
+    ---星楼月影
+    if cdEX("星楼月影") then
+        return false
+    end
+    if state("击倒") and (weight <= 8 or life() <= 80)  then
+        return true
+    end
+    if state("眩晕|定身|锁足") and cdEX2("太阴指") and (weight <= 8 or life() <= 80)  then
+        return true
+    end
+    return false
+end
+function bishuitaotian()
+    ---碧水滔天
+    if cdEX("碧水滔天") then
+        return false
+    end
+    if mana()<=40  then
+        return true
+    end
     return false
 end
 function shuyunzhuyue()
@@ -892,163 +724,102 @@ function shuyunzhuyue()
     return false
 end
 
-function wenshui(weight)
-    ---问水诀
-    --kotabreak(5, 24, "玉虹贯日")
-    --print("问水")
-    ---醉月
-    if zuiyue() then
-        CastTo("醉月", target, true)
-        --return 1
-    end
-
-    ---梦泉虎跑
-    if hupao() then
-        --print("虎跑")
-        skillEX("梦泉虎跑")
-    end
-    ---玉泉鱼跃
-    if yuyue() then
-        Cast("玉泉鱼跃", true)
-    end
-    ---啸日
-    if xiaori(weight) then
-        Cast("啸日", true)
-    end
-    ---玉虹贯日
-    if yuhongguanri() then
-        skill("玉虹贯日")
-    end
-    ---平湖断月
-    if pinghuduanyue() then
-        skill("平湖断月")
-    end
-    if huanglongtucui() then
-        skill("黄龙吐翠")
-    end
-    -----九溪弥烟
-    --if jiuximiyan() then
-    --	skill("九溪弥烟")
-    --end
-    ---听雷
-    if tinglei() then
-        skill("听雷")
-    end
-
-end
-function shanjujianyi(weight)
-    ---山居剑意
-    if xieliubaoshi(weight) then
-        --print("霞流宝石")
-        skillEX2("霞流宝石")
-        --return
-    end
-    if zuiyue() then
-        --print("醉月")
-
-        CastTo("醉月", target, true)
-        --return
-        --return 1
-    end
-    if jingtao() then
-        --print("惊涛")
-        CastTo("惊涛", target, true)
-        --return
-
-        --return 1
-    end
-
-
-    if fengchayunjing(weight) then
-        --print("峰插云景")
-        skillEX2("峰插云景")
-        --return
-    end
-    ---风来吴山
-    if isFengche and fenglaiwushan(weight) then
-        --print("风来吴山")
-        skillEX2("风来吴山")
-        return 1
-    end
-    if yunfeiyuhuang(weight) then
-        --print("云飞玉皇")
-        CastTo("云飞玉皇", target, false)
-        --return 1
-    end
-    ---鹤归孤山
-    if heguigushan() then
-        --print("鹤归孤山")
-        CastTo("鹤归孤山", target, false)
-        --return 1
-    end
-    ---松舍问霞
-    if songshewenxia(weight) then
-        --print("松舍问霞")
-        skillEX("松舍问霞")
-        --return 1
-    end
-
-    ---夕照雷锋
-    if xizhaoleifeng() then
-        --print("夕照雷峰")
-        skillEX("夕照雷峰")
-    end
-    ---啸日
-    if xiaori(weight) then
-        --print("啸日")
-        Cast("啸日", true,false)
-    end
-
-
-    ---听雷
-    if tinglei() then
-        --print("听雷")
-        skill("听雷")
-    end
+function zhouweiguadu()
+        ---向非当前目标释放商阳指跟阳明指
+        local players = GetAllPlayer()
+        for k, v in ipairs(players) do
+            --v是玩家对象
+            if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
+                if yangmingbuff[v.dwID] ~=nil then
+                    if (GetTickCount() - yangmingbuff[v.dwID] ) < 17000 then
+                        CastTo("阳明指",v,false)
+                    end
+                else
+                    CastTo("阳明指",v,false)
+                end
+                if shangyangbuff[v.dwID] ~=nil then
+                    if (GetTickCount() - shangyangbuff[v.dwID] ) < 17000 then
+                        CastTo("商阳指",v,false)
+                    end
+                else
+                    CastTo("商阳指",v,false)
+                end
+            end
+        end
 end
 
 function DPS(weight)
-    ---莺鸣柳
-    if yingmingliu(weight) then
-        Cast("莺鸣柳", true, false)
-    end
-    ---泉凝月
-    if quanningyue() then
-        Cast("泉凝月", true, false)
-    end
-    ---云稀松
-    if yunxisong() then
-        Cast("云栖松", true, true)
-    end
-    ---探梅
-    if tanmei() then
-        skillEX("探梅")
-    end
-    if fengchuihe() then
-        skill("风吹荷")
-    end
-    if shuyunzhuyue() then
-        CastTo("蹑云逐月", target, false)
-    end
-    --print("判断心法")
-    if mount("问水诀") then
-        wenshui(weight)
-    else
-        --print("山居")
-        shanjujianyi(weight)
-    end
 
-end
-function toBack()
-    ---自动绕背
-    if GetDist(target) < 2 then
-        if IsBack(target) then
-            MoveForwardStop()
+
+    ---春泥护花
+    if chunnihuhua() then
+        Cast("春泥护花", true, true)
+    end
+    if taiyinzhi(weight) then
+        Cast("太阴指", true, true)
+    end
+    if xinglouyueying(weight) then
+        Cast("星楼月影", true, true)
+    end
+    if shuiyuewujian(weight) then
+        Cast("水月无间", true, true)
+    end
+    ---乱洒青荷
+    if luansaqinghe(weight) then
+        skillEX2("乱洒青荷")
+    end
+    ---玉石俱焚
+    if yushijufen(weight) then
+        if furongbingdi() then
+            skillEX("芙蓉并蒂")
         else
-            MoveForwardStart()
+            if shuiyuewujian(weight) then
+                Cast("水月无间", true, true)
+            end
+            skillEX("玉石俱焚")
         end
     end
+
+    if yangmingzhi() then
+        skillEX("阳明指")
+    end
+    if furongbingdi() then
+        skill("芙蓉并蒂")
+    end
+    if shangyangzhi() then
+        skill("商阳指")
+    end
+    ---兰摧玉折
+    if lancuiyuzhe() then
+        skillEX("兰摧玉折")
+    end
+
+    ---钟林毓秀
+    if zhonglingminxiu() then
+        skill("钟林毓秀")
+    end
+    if jueyinzhi() then
+        skillEX("厥阴指")
+    end
+
+
+    ---[清风垂露]
+    if qingfengchuilu() then
+        Cast("清风垂露", true, true)
+    end
+    ---碧水滔天
+    if bishuitaotian() then
+        Cast("碧水滔天", true, true)
+    end
+    ---清心静气
+    if qingxinjingqi() then
+        Cast("清心静气", true, true)
+    end
+    ---向非当前目标释放商阳指跟阳明指
+    zhouweiguadu()
+
 end
+
 
 function findTarget(outTarger)
     ---是否排除当前目标
@@ -1228,7 +999,7 @@ end
 
 function tab(weight)
     if objState(target, "重伤")  then
-        findTargetforRange(30)
+        findTargetforRange(20)
         print("目标重伤")
 
     end
@@ -1256,42 +1027,27 @@ function tab(weight)
     --		end
     --	end
     --end
-    if HaveTalent("探梅") and cdEX("探梅") == false then
+    if cdEX("春泥护花") == false or ( HaveTalent("清风垂露") and cdEX("清风垂露") == false ) or ( HaveTalent("南风吐月") and cdEX("南风吐月") == false )then
         ---如果探梅没CD 并且目标是敌对
         local target
         --遍历队伍成员
         for k, v in ipairs(GetAllMember()) do
-            if IsPlayer(v.dwID) and IsParty(v) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
+            if IsPlayer(v.dwID) and IsParty(v) and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
                 local tate = GetState(v)
-                if (string.find("眩晕|定身", tate)~=nil and objLife(v) <= 80) or objLife(v) <= 60 then
+                if  objLife(v) <= 60 then
                     --先保存当前对象
-                    if ota("风来吴山") then
-                        CastTo("探梅", v, true)
-                    else
-                        CastTo("探梅", v, false)
-                    end
-                    print("给探梅")
+                        CastTo("春泥护花", v, true)
+                    print("给春泥护花")
                     --return 1
                 end
-            end
-        end
-    end
-    if HaveTalent("松舍问霞") and cdEX("松舍问霞") == false  then
-        ---如果探梅没CD 并且目标是敌对
-        local target
-        --遍历队伍成员
-        for k, v in ipairs(GetAllMember()) do
-            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
-                local tate = GetState(v)
-                if string.find("冲刺", tate) ==nil then
+                if  HaveTalent("南风吐月") and objLife(v) <= 30 then
                     --先保存当前对象
-                    if ota("风来吴山") then
-                        CastTo("松舍问霞", v, true)
-                    else
-                        CastTo("松舍问霞", v, false)
-                    end
-                    print("松舍问霞")
+                    CastTo("南风吐月", v, true)
+                    print("给春泥护花")
                     --return 1
+                end
+                if qusan(v) then
+                    CastTo("清风垂露", v, true)
                 end
             end
         end
@@ -1330,6 +1086,11 @@ end
 function Main(player)
     this_player = player
     mbuff = GetBuff(player)
+    --南风吐月
+    if nanfengtuyue() then
+        Cast("南风吐月",true,true)
+    end
+
     target, tclass = GetTarget(player)
     if target ~= nil then
         tbuffList = GetBuff(target)
@@ -1344,35 +1105,16 @@ function Main(player)
             StopAction()
             return
         end
-        if ota("云飞玉皇") then
-            MoveAction_StopAll()
-            return
+
+        if isMianxiang then
+            TurnTo(target)
         end
-        --跟随当前目标
-
-            if isGensui and IsDangerArea(target, "敌对") then
-                MoveAction_StopAll()
-            else
-                if isMianxiang then
-                    TurnTo(target)
-                end
-                if isGensui then
-                    MoveForwardStart()
-                end
-                if isRaobei then
-                    toBack()
-                end
-            end
-
 
         --if GetHeight(player)>0 then
         --	Jump()
         --end
 
-        if ota("风来吴山") then
-            --如果风车就不执行后面的
-            return
-        end
+
         if IsParty(target) then
             return
         end
@@ -1395,13 +1137,14 @@ function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)
     --起跳到落地有8帧（0.5秒），你想躲这个技能（聂云，后跳什么的）
     --local myid = GetMyID()
     --local skillList =
-    --if dwSkillID == 123 and tIDnX == myid then  --如果是对我释放，这个是起跳阶段的技能ID
-    --	--如果过去的帧数小于4，总共8帧，大于4说明网速太差，已经躲不掉了
-    --	--这里设为4只是演示，实战中要自己尝试
-    --	if nPastFrame < 4 then
-    --		Cast(9007)  --后跳
-    --	end
-    --end
+    if CasterID == myid    then  --如果是对我释放，这个是起跳阶段的技能ID
+        if  dwSkillID == 179 then ---阳明指
+            yangmingbuff[tIDnX]= GetTickCount()
+        end
+        if  dwSkillID == 180 then ---商阳指
+            shangyangbuff[tIDnX]= GetTickCount()
+        end
+    end
 
     --print(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)  --输出释放信息
 end

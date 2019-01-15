@@ -16,7 +16,7 @@ AddOption("自动进8尺跟随")
 
 function ota(desc)
 	local mota, motatime, motaratio = GetPrepare()
-	return string.find(desc, mota)
+	return string.find(desc, mota)~=nil
 end
 
 function objLife(obj)
@@ -90,19 +90,19 @@ function state(desc)
 		laststate = tate
 		print("当前",tate,"寻找",desc)
 	end
-	return string.find(desc, tate)
+	return string.find(desc, tate)~=nil
 end
 function tstate(desc)
 	if target == nil then
 		return false
 	end
 	local tstate = GetState(target)
-	return string.find(desc, tstate)
+	return string.find(desc, tstate)~=nil
 end
 function mount(desc)
 	local school = GetMount(this_player)
 	--print(school)
-	return string.find(desc, school)
+	return string.find(desc, school)~=nil
 end
 function tmount(desc)
 	if tclass == NPC then
@@ -114,7 +114,7 @@ function tmount(desc)
 	if school == nil then
 		return false
 	end
-	return string.find(desc, school)
+	return string.find(desc, school)~=nil
 end
 
 function statep(desc)
@@ -695,7 +695,7 @@ function jianxintongming(weight)
 	if cdEX("剑心通明") or dis()>20  then
 		return false
 	end
-	if weight <=8 then
+	if weight <=6 then
 		local naima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
 		if naima~=nil and tmount("补天诀|离经易道|相知|云裳心经")==false then
 			if  naima~=target and objState(naima,"眩晕|击倒|冲刺")==false then
@@ -711,7 +711,7 @@ end
 
 function shuyunzhuyue()
 	---蹑云逐月
-	if cdEX("蹑云逐月") then
+	if cdEX("蹑云逐月") or not GetOption("自动进8尺跟随") then
 		return false
 	end
 	if dis2()>18 then
@@ -755,8 +755,8 @@ function DPS(weight)
 	end
 	---剑心通明
 	if jianxintongming(weight) then
-		skillEX("剑心通明")
-		print("剑心通明")
+		--skillEX("剑心通明")
+		--print("剑心通明")
 	end
 	---剑转流云
 	if jianzhuanliuyun2() then
@@ -822,7 +822,7 @@ function findTarget(outTarger)---是否排除当前目标
 	local lastWeight  = 100
 	for k,v in ipairs(players) do	--v是玩家对象
 		local weight = 10
-		if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对")==false and GetDist(this_player, v) <20 and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0)==false and v.IsHaveBuff(10212, 0)==false then	--如果不是我
+		if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对")==false and GetDist(this_player, v) <20 and IsVisible(this_player, v) and objNotWudi(v) then	--如果不是我
 			if outTarger==false or v ~= target then	---如果需要排除当前目标
 				if objLife(v) ==0 or objState(v,"重伤")then
 					weight = weight+ 100
@@ -878,7 +878,7 @@ function findTargetforHp(hp)
 	local lastWeight  = 100
 	for k,v in ipairs(players) do	--v是玩家对象
 		local weight = 10
-		if IsPlayer(v.dwID)  and IsEnemy(v) and IsDangerArea(v, "敌对")==false  and GetDist(this_player, v) <20 and IsVisible(this_player, v) and objLife(v)<hp and v.IsHaveBuff(9695, 0)==false and v.IsHaveBuff(10212, 0)==false then	--如果不是我
+		if IsPlayer(v.dwID)  and IsEnemy(v) and IsDangerArea(v, "敌对")==false  and GetDist(this_player, v) <20 and IsVisible(this_player, v) and objLife(v)<hp and objNotWudi(v) then	--如果不是我
 			if objLife(v) ==0 or objState(v,"重伤")then
 				weight = weight+ 100
 			end
@@ -937,7 +937,7 @@ function findTargetforRange(range)
 	local lastWeight  = 100
 	for k,v in ipairs(players) do	--v是玩家对象
 		local weight = 10
-		if IsPlayer(v.dwID)  and IsEnemy(v) and IsDangerArea(v, "敌对")==false and GetDist(this_player, v) <range and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0)==false and v.IsHaveBuff(10212, 0)==false then	--如果不是我
+		if IsPlayer(v.dwID)  and IsEnemy(v) and IsDangerArea(v, "敌对")==false and GetDist(this_player, v) <range and IsVisible(this_player, v) and objNotWudi(v) then	--如果不是我
 			if objLife(v) ==0 or objState(v,"重伤")then
 				weight = weight+ 100
 			end

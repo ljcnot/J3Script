@@ -12,12 +12,20 @@ local help = false
 local lastSelectTime = 0
 local isprint = true
 --local youxian3 ={}
-
+AddOption("自动切残血")
+szScriptDesc = "作者：keima\n说明：脚本说明\n奇穴：[渊壑][扶桑][乘龙][遥思][冯夷][遨宇][鸿轨][跃潮][溯徊][翔极碧落][穹庐][澹然若海]"
 function ota(desc)
     local mota, motatime, motaratio = GetPrepare()
-    return string.find(desc, mota)
+    return string.find(desc, mota)~=nil
 end
-
+function tota(desc)
+    local mota, motatime, motaratio = GetPrepare(target)
+    return string.find(desc, mota)~=nil
+end
+function totaEX()
+    local mota, motatime, motaratio = GetPrepare(target)
+    return motatime>0
+end
 function objLife(obj)
     if obj == nil then
         return 999
@@ -47,18 +55,29 @@ function ttlife()
     local bfb = (ttarget.nCurrentLife / ttarget.nMaxLife) * 100
     return bfb
 end
+function face()
+    if target == nil then
+        return 999
+    end
+    return GetFace(target)
+end
+function isPositive()
+    return face()>=0 and face()<=15
+end
 function buff(list)
+    mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, list) > 0
 end
 function tbuff(list)
+    tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
-
 end
 function bufftime(id)
+    mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, id)
 end
 function skill(skillid)
-    --print(skillid)
+    ----print(skillid)
     Cast(skillid, false, false)
 end
 function skillEX(skillid)
@@ -80,6 +99,7 @@ function his()
 end
 function mhis()
     return GetHeight(this_player)
+
 end
 function dis2()
     return GetDist2D(target)
@@ -95,19 +115,19 @@ end
 
 function state(desc)
     local tate = GetState(this_player)
-    return string.find(desc, tate)
+    return string.find(desc, tate)~=nil
 end
 function tstate(desc)
     if target == nil then
         return false
     end
     local tstate = GetState(target)
-    return string.find(desc, tstate)
+    return string.find(desc, tstate)~=nil
 end
 function mount(desc)
     local school = GetMount(this_player)
-    --print(school)
-    return string.find(desc, school)
+    ----print(school)
+    return string.find(desc, school)~=nil
 end
 function tmount(desc)
     if tclass == NPC then
@@ -115,15 +135,15 @@ function tmount(desc)
     end
 
     local school = GetMount(target)
-    --print(school)
+    ----print(school)
     if school == nil then
         return false
     end
-    return string.find(desc, school)
+    return string.find(desc, school)~=nil
 end
 
 function statep(desc)
-    --print(desc)
+    ----print(desc)
     return GetTypeTime(mbuff, desc) > 0
 end
 
@@ -138,7 +158,7 @@ function tstatep(desc)
     if target == nil then
         return false
     end
-    --print(desc)
+    ----print(desc)
     return GetTypeTime(tbuffList, desc) > 0
 end
 function tstate(desc)
@@ -174,6 +194,16 @@ function CastTime(skillid, time)
         return false
     end
     return GetCastTime(target, skillid) > 0 and GetCastTime(target, skillid) <= time
+end
+function objNotWudi(obj)
+    local wudi = {203,9695,10212,9934,377}
+    for k, v in ipairs(wudi) do
+        if obj.IsHaveBuff(v, 0) then
+            return false
+        end
+
+    end
+return true
 end
 ---权重计算
 function getWeight()
@@ -390,6 +420,7 @@ end
 --end
 ---缴械时间
 function jiaoxieTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "缴械")
     if time then
         return time
@@ -398,6 +429,7 @@ function jiaoxieTime()
 end
 ---眩晕时间
 function yunxuanTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "眩晕")
     if time then
         return time
@@ -406,6 +438,7 @@ function yunxuanTime()
 end
 ---定身时间
 function dingshenTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "定身")
     if time then
         return time
@@ -414,6 +447,7 @@ function dingshenTime()
 end
 ---锁足时间
 function suozuTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "锁足")
     if time then
         return time
@@ -422,6 +456,7 @@ function suozuTime()
 end
 ---击倒时间
 function jidaoTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "击倒")
     if time then
         return time
@@ -430,6 +465,7 @@ function jidaoTime()
 end
 ---减疗时间
 function jianliaoTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "减疗")
     if time then
         return time
@@ -438,6 +474,7 @@ function jianliaoTime()
 end
 ---封内时间
 function fengneiTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "封内")
     if time then
         return time
@@ -446,6 +483,7 @@ function fengneiTime()
 end
 ---沉默时间
 function chenmoTime()
+    tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "沉默")
     if time then
         return time
@@ -463,13 +501,9 @@ function cdEX2(skill)
     ---充能技能判断
     return GetSkillCN(skill)==0
 end
-function cdEX3(skill)
-    ---充能技能判断
-    return GetSkillCD(skill)>0
-end
 
 function kongzhiTimeEX(time)
-    --print(time)
+    ----print(time)
     return dingshenTime() >= time or yunxuanTime() >= time or jidaoTime() >= time
 end
 function jiekongTimeEX(time)
@@ -526,16 +560,26 @@ function yichenbuxu()
     if cdEX2("逸尘步虚") then
         return false
     end
-    if cdEX("海运南冥") and cdEX2("物化天行")==false and GetCastTime(this_player,20949)< 1 and GetCastTime(this_player,20285)>2   then
-        --print(GetCastTime(this_player,20288))
-        return true
-    end
-    if cdEX2("物化天行") and buff("13735") and GetCastTime(this_player,20285)>2 then
-        return true
-    end
+    --if cdEX2("溟海御波") and cdEX2("物化天行") then
+    --    ----print(GetCastTime(this_player,20288))
+    --    return true
+    --end
+    --if cdEX2("物化天行") and buff("13735") and GetCastTime(this_player,20285)>2 then
+    --    return true
+    --end
     --if cdEX2("物化天行") and GetCastTime(this_player,20949)< 1 and GetCastTime(this_player,20285)>2  then
     --    return  true
     --end
+    --if dis()>30 and isPositive() then
+    --    return true
+    --end
+    if isPositive() and cdEX2("物化天行")==false and GetCastTime(this_player,20949)< 1 and (GetCastTime(this_player,20285)<=0 or GetCastTime(this_player,20285)>2)   then
+        ----print(GetCastTime(this_player,20288))
+        return true
+    end
+    if isPositive() and cdEX2("物化天行") and buff("13735") and (GetCastTime(this_player,20285)<=0 or GetCastTime(this_player,20285)>2) then
+        return true
+    end
     return false
 end
 function shangsheng()
@@ -543,8 +587,8 @@ function shangsheng()
         return false
     end
     ---物化天行 上升
-    if cdEX("海运南冥") then
-        --print(GetCastTime(this_player,20288))
+    if cdEX("溟海御波") or dis()>8 then
+        ----print(GetCastTime(this_player,20288))
         return true
     end
     return false
@@ -564,7 +608,7 @@ function zhubolingyou(weight)
 end
 function fuyoutiandi()
     ---浮游天地
-    if cdEX2("浮游天地") or buff("浮游天地") or (GetHeight(this_player)>0 and GetHeight(this_player)<20 ) then
+    if cdEX2("浮游天地") or buff("浮游天地") or (GetHeight(this_player)>10 and GetHeight(this_player)<20 ) then
         return false
     end
     return true
@@ -574,17 +618,25 @@ function yuechaozhanbo()
     if dis()>25 then
         return false
     end
-    if buff("浮游天地") and cdEX2("逸尘步虚") and cdEX2("物化天行") and cdEX("浮游天地")==false then
+    if tstatep("免控") or tstate("冲刺") then
+        return false
+    end
+
+    if buff("浮游天地") and  cdEX2("物化天行") and buff(13735) then
+        return true
+    end
+
+    if buff("浮游天地") ==false  then
         return true
     end
     return false
 end
-function yuechaozhanbo()
+function muluoyangui()
     ---木落雁归
     if dis()>6 then
         return false
     end
-    if buff("浮游天地") and cdEX("跃潮斩波") and cdEX2("逸尘步虚") and cdEX2("物化天行") and cdEX("浮游天地")==false then
+    if buff("浮游天地") and cdEX("跃潮斩波") and buff(13735)  and cdEX2("逸尘步虚") and cdEX2("物化天行") and cdEX("浮游天地")==false then
         return true
     end
     if buff("浮游天地") ==false then
@@ -650,48 +702,117 @@ function xiangjibiluo()
     if  HaveTalent("翔极碧落")==false or cdEX("翔极碧落") then
         return false
     end
+    if tstatep("免打断") and totaEX()  then
+        return true
+    end
+    return false
+end
+function hongjianyufei(weight)
+    ---鸿渐于飞
+    if HaveTalent("鸿渐于飞")==false or cdEX("鸿渐于飞") or dis()>25 then
+        return false
+    end
+    if buff("浮游天地") then
+        if cdEX2("物化天行") and buff(13735) then
+            return true
+        end
+        if weight<=8 then
+            return true
+        end
+    else
+        return true
+    end
+
+return false
+end
+function fuyaojiutian()
+    ---扶摇九天
+end
+function zhanranruohai(weight)
+    ---澹然若海
+    if cdEX("澹然若海") or dis()>15 then
+        return false
+    end
+    if cdEX2("物化天行") and FindNpc(this_player, "驰风震域", 15, "自己") and tstatep("免控")==false then
+        return true
+    end
+    if FindNpc(this_player, "驰风震域", 15, "自己") and kongzhiTimeEX(2) then
+        return true
+    end
+    if weight<=2 then
+        return true
+    end
 
     return false
 end
+function dingbodilan()
+    ---定波砥澜
+    if buff("浮游天地") then
+        return false
+    end
+    if cdEX("木落雁归") and cdEX("跃潮斩波") then
+        return true
+    end
+    return false
+end
+
 function fly(weight)
     ---浮游状态
     if wuhuatianxing() then
-        --print("物化天行")
-        skill("物化天行")
+        ----print("物化天行")
+        Cast("物化天行",false,true)
     end
     if zhubolingyou(weight) then
         skillEX("逐波灵游")
     end
     if nanhaiyunming() then
-        --print("海运南冥")
+        ----print("海运南冥")
         skillEX("海运南冥")
         --return
     end
     if minghaiyubo() then
-        --print("溟海御波")
+        ----print("溟海御波")
         skillEX("溟海御波")
         --return
     end
 
     if shangsheng() then
-        skill("物化天行·上升")
+        skill(20949)
     end
     if yichenbuxu() then
         skill(20285)
     end
+    if zhanranruohai(weight) then
+        skillEX("澹然若海")
+    end
+    --if hongjianyufei(weight) then
+    --    skill("鸿渐于飞")
+    --end
     if yuechaozhanbo() then
         skill("跃潮斩波")
     end
-    if yuechaozhanbo() then
+    if muluoyangui() then
         skill("木落雁归")
     end
 end
-function ground()
+function ground(weight)
+    if mhis()<8 and buff(208) and cdEX("浮游天地") then
+        Jump()
+    end
     ---地面
+    if zhanranruohai(weight) then
+        skillEX("澹然若海")
+    end
     if fuyoutiandi() then
         skill("浮游天地")
     end
+    if hongjianyufei(weight) then
+        skill("鸿渐于飞")
+    end
     if yuechaozhanbo() then
+        skill("跃潮斩波")
+    end
+    if muluoyangui() then
         skill("木落雁归")
     end
 end
@@ -706,6 +827,9 @@ function bird(weight)
     if zhenchitunan(weight) then
         skill("振翅图南")
     end
+    if xiangjibiluo() then
+        skill("翔极碧落")
+    end
     if jidianchiyu() then
         skill("疾电叱羽")
     end
@@ -715,11 +839,12 @@ end
 function DPS(weight)
 
     bird(weight)
-
+    skill("飞刃破风")
+    skill("风云重锁")
     if buff("浮游天地") then
         fly(weight)
     else
-        ground()
+        ground(weight)
     end
 
 
@@ -745,7 +870,7 @@ function findTarget(outTarger)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if outTarger == false or v ~= target then
                 ---如果需要排除当前目标
@@ -804,7 +929,7 @@ function findTargetforHp(hp)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and v.IsHaveBuff(203, 0) == false and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and  objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -847,7 +972,7 @@ function findTargetforHp(hp)
     end
     ---如果遍历的目标不等于nil
     if lastTar ~= nil then
-        print("选择40%血的目标")
+        --print("选择40%血的目标")
         SetTarget(lastTar)
     end
 end
@@ -865,7 +990,7 @@ function findTargetforRange(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and  objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -915,7 +1040,7 @@ end
 function tab(weight)
     if objState(target, "重伤")  then
         findTargetforRange(30)
-        print("目标重伤")
+        --print("目标重伤")
 
     end
     if IsParty(target) then
@@ -942,72 +1067,72 @@ function tab(weight)
     --		end
     --	end
     --end
-    if HaveTalent("探梅") and cdEX("探梅") == false then
-        ---如果探梅没CD 并且目标是敌对
-        local target
-        --遍历队伍成员
-        for k, v in ipairs(GetAllMember()) do
-            if IsPlayer(v.dwID) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
-                local tate = GetState(v)
-                if string.find("眩晕|定身|爬起|僵直", tate) and objLife(v) < 90 then
-                    --先保存当前对象
-                    if ota("风来吴山") then
-                        CastTo("探梅", v, true)
-                    else
-                        CastTo("探梅", v, false)
-                    end
-                    print("给探梅")
-                    --return 1
-                end
-            end
-        end
-    end
-    if HaveTalent("松舍问霞") and cdEX("松舍问霞") == false  then
-        ---如果探梅没CD 并且目标是敌对
-        local target
-        --遍历队伍成员
-        for k, v in ipairs(GetAllMember()) do
-            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
-                local tate = GetState(v)
-                if string.find("冲刺", tate) == false then
-                    --先保存当前对象
-                    if ota("风来吴山") then
-                        CastTo("松舍问霞", v, true)
-                    else
-                        CastTo("松舍问霞", v, false)
-                    end
-                    print("松舍问霞")
-                    --return 1
-                end
-            end
-        end
-    end
-    --print("当前目标是否是队友",IsParty(target))
+    --if HaveTalent("探梅") and cdEX("探梅") == false then
+    --    ---如果探梅没CD 并且目标是敌对
+    --    local target
+    --    --遍历队伍成员
+    --    for k, v in ipairs(GetAllMember()) do
+    --        if IsPlayer(v.dwID) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+    --            local tate = GetState(v)
+    --            if string.find("眩晕|定身|爬起|僵直", tate) and objLife(v) < 90 then
+    --                --先保存当前对象
+    --                if ota("风来吴山") then
+    --                    CastTo("探梅", v, true)
+    --                else
+    --                    CastTo("探梅", v, false)
+    --                end
+    --                --print("给探梅")
+    --                --return 1
+    --            end
+    --        end
+    --    end
+    --end
+    --if HaveTalent("松舍问霞") and cdEX("松舍问霞") == false  then
+    --    ---如果探梅没CD 并且目标是敌对
+    --    local target
+    --    --遍历队伍成员
+    --    for k, v in ipairs(GetAllMember()) do
+    --        if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+    --            local tate = GetState(v)
+    --            if string.find("冲刺", tate) == false then
+    --                --先保存当前对象
+    --                if ota("风来吴山") then
+    --                    CastTo("松舍问霞", v, true)
+    --                else
+    --                    CastTo("松舍问霞", v, false)
+    --                end
+    --                --print("松舍问霞")
+    --                --return 1
+    --            end
+    --        end
+    --    end
+    --end
+    ----print("当前目标是否是队友",IsParty(target))
     --if cdEX("探梅") and IsParty(target) and life() >40 then
     --	if save_target ~= nil then
     --		--换回保存的目标
     --		SetTarget(save_target)
-    --		print("探梅完了,切回原来目标")
+    --		--print("探梅完了,切回原来目标")
     --
     --		return 1
     --	else
     --		findTarget(false)
     --	end
-    --	print("探梅完了")
+    --	--print("探梅完了")
     --end
     -----上次切换目标大于5秒才会换目标
     if weight>=50 and (GetTickCount() - lastSelectTime)>5000 then
-        print("目标减伤过高")
+        --print("目标减伤过高")
         lastSelectTime = GetTickCount()
         findTarget(true)
     end
 
-    if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
-        print("危险区域切换目标")
-        lastSelectTime = GetTickCount()
-        findTarget(true)
-    end
-    if tlife() > 40 then
+    --if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
+    --    --print("危险区域切换目标")
+    --    lastSelectTime = GetTickCount()
+    --    findTarget(true)
+    --end
+    if GetOption("自动切残血") and tlife() > 40 then
         findTargetforHp(40)
     end
 end
@@ -1018,14 +1143,19 @@ function Main(player)
     mbuff = GetBuff(player)
     target, tclass = GetTarget(player)
     if target ~= nil then
+        --if tclass == NPC then
+        --    return
+        --end
+
+
         tbuffList = GetBuff(target)
         ttarget, ttclass = GetTarget(target)
         if ttarget ~= nil then
             ttbuffList = GetBuff(ttarget)
         end
         local weight = getWeight()
-        --print("weight:",weight)
-        --tab(weight)
+        ----print("weight:",weight)
+        tab(weight)
         if tbuff("盾立") then
             StopAction()
             return
@@ -1053,7 +1183,9 @@ function Main(player)
         --    如果风车就不执行后面的
             --return
         --end
-
+        if cdEX("扶摇直上") == false then
+            Cast("扶摇直上",true,false)
+        end
         DPS(weight)
     end
 end
@@ -1081,7 +1213,7 @@ function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)
     --	end
     --end
 
-    --print(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)  --输出释放信息
+    ----print(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)  --输出释放信息
 end
 
 
