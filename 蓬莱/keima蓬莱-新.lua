@@ -77,7 +77,7 @@ function bufftime(id)
     return GetBuffTime(mbuff, id)
 end
 function skill(skillid)
-    ----print(skillid)
+    --print(skillid)
     Cast(skillid, false, false)
 end
 function skillEX(skillid)
@@ -533,9 +533,9 @@ function jiekong()
     end
     return true
 end
-function wuhuatianxing()
+function wuhuatianxing(weight)
     ---物化天行
-    if dis()>30 or dis()<2 or cdEX2("物化天行") then
+    if dis()>30 or dis()<2 or cdEX2("物化天行") or (tstatep("免控") and weight>8) then
         return false
     end
 
@@ -573,7 +573,7 @@ function yichenbuxu()
     --if dis()>30 and isPositive() then
     --    return true
     --end
-    if isPositive() and cdEX2("物化天行")==false and GetCastTime(this_player,20949)< 1 and (GetCastTime(this_player,20285)<=0 or GetCastTime(this_player,20285)>2)   then
+    if isPositive() and cdEX2("物化天行")==false and GetCastTime(this_player,20949)> 0.4 and GetCastTime(this_player,20949)< 0.6 and (GetCastTime(this_player,20285)<=0 or GetCastTime(this_player,20285)>2)   then
         ----print(GetCastTime(this_player,20288))
         return true
     end
@@ -622,7 +622,7 @@ function yuechaozhanbo()
         return false
     end
 
-    if buff("浮游天地") and  cdEX2("物化天行") and buff(13735) then
+    if buff("浮游天地") and cdEX2("浮游天地") and  cdEX2("物化天行") and cdEX2("逸尘步虚") and buff(13735) then
         return true
     end
 
@@ -733,13 +733,13 @@ function zhanranruohai(weight)
     if cdEX("澹然若海") or dis()>15 then
         return false
     end
-    if cdEX2("物化天行") and FindNpc(this_player, "驰风震域", 15, "自己") and tstatep("免控")==false then
+    if cdEX2("物化天行") and FindNpc(this_player, "驰风震域", 15, "自己") and tstatep("免控")==false  and cdEX2("浮游天地") then
         return true
     end
-    if FindNpc(this_player, "驰风震域", 15, "自己") and kongzhiTimeEX(2) then
+    if FindNpc(this_player, "驰风震域", 15, "自己") and kongzhiTimeEX(2) and cdEX2("浮游天地") then
         return true
     end
-    if weight<=2 then
+    if weight<=2 and cdEX2("浮游天地") then
         return true
     end
 
@@ -757,8 +757,12 @@ function dingbodilan()
 end
 
 function fly(weight)
+
     ---浮游状态
-    if wuhuatianxing() then
+    if yichenbuxu() then
+        skillEX(20285)
+    end
+    if wuhuatianxing(weight) then
         ----print("物化天行")
         Cast("物化天行",false,true)
     end
@@ -777,11 +781,9 @@ function fly(weight)
     end
 
     if shangsheng() then
-        skill(20949)
+        skillEX(20949)
     end
-    if yichenbuxu() then
-        skill(20285)
-    end
+
     if zhanranruohai(weight) then
         skillEX("澹然若海")
     end
@@ -839,8 +841,11 @@ end
 function DPS(weight)
 
     bird(weight)
-    skill("飞刃破风")
-    skill("风云重锁")
+    if  HaveTalent("鸿渐于飞") then
+        skill("飞刃破风")
+        skill("风云重锁")
+    end
+
     if buff("浮游天地") then
         fly(weight)
     else
@@ -852,7 +857,7 @@ function DPS(weight)
 end
 function toBack()
     ---自动绕背
-    if GetDist(target) < 2 then
+    if GetDist(target) <=2 then
         if IsBack(target) then
             MoveForwardStop()
         else
@@ -870,7 +875,7 @@ function findTarget(outTarger)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if outTarger == false or v ~= target then
                 ---如果需要排除当前目标
@@ -929,7 +934,7 @@ function findTargetforHp(hp)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and  objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and  objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -990,7 +995,7 @@ function findTargetforRange(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and  objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false  and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and  objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100

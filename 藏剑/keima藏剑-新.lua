@@ -94,6 +94,16 @@ end
 function dis()
     return GetDist(target)
 end
+function haveMiankong()
+    if target == nil then
+        return false
+    end
+    --local talent = GetTalentInfo(target)
+    if  tbuff("女娲补天") then
+        return true
+    end
+    return false
+end
 function his()
     if target == nil or  tclass == NPC then
         return 0
@@ -216,7 +226,7 @@ function getWeight()
     --获取目标的buff数据
     --local tbuffList = GetBuff(target)
 
-    local wudi = "镇山河|平沙落雁|鬼斧神工|散流霞|笼花|盾立|南风吐月|笑醉狂|太虚|力挽狂澜|啸如虎|浴火|不动|蚀心蛊"
+    local wudi = "镇山河|平沙落雁|鬼斧神工|散流霞|盾立|南风吐月|笑醉狂|啸如虎|浴火|不动|蚀心蛊"
     local jianshang80 = "9696|7119|368|10307"
     --清绝影歌 轮回 守如山 笑傲光阴
     local jianshang70 = "8421|10493|1802|384"
@@ -264,18 +274,18 @@ function getWeight()
 
     local weight = 10
     --OutputinGame("---------------------------------")
-    if GetBuffTime(tbuffList, wudi) > 0 then
-        weight = weight + 100
-    end
+    --if GetBuffTime(tbuffList, wudi) > 0 then
+    --    weight = weight + 100
+    --end
     if tstatep("无敌") then		--如果目标可控制
         weight= weight +100
     end
     if tstatep("不死") then		--如果目标可控制
         weight= weight +100
     end
-    if GetBuffTime(tbuffList, wudi) > 0 then
-        weight = weight + 100
-    end
+    --if GetBuffTime(tbuffList, wudi) > 0 then
+    --    weight = weight + 100
+    --end
     if tstatep("减伤90") then
         weight = weight+9
     end
@@ -511,7 +521,22 @@ function jiekong()
     end
     return true
 end
-
+function seeObj(obj)
+    local count = 0
+    if obj ==nil then
+        return 0
+    end
+    --遍历队伍成员
+    for k, v in ipairs(GetAllMember()) do
+        if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false  then
+            local z_target, z_tclass = GetTarget(v)
+            if obj.dwID == z_target.dwID then
+                count = count+1
+            end
+        end
+    end
+    return count
+end
 function tinglei()
     ---听雷
     if dis() > 4 then
@@ -589,10 +614,10 @@ function huanglongtucui()
 end
 function zuiyue()
     ---醉月
-    if dis() > 6 or cdEX("醉月") or this_player.nCurrentRage < 10 or tstatep("免控") or tstatep("闪避") or (mount("山居剑意") and (HaveTalent("惊涛") ==false or cdEX("惊涛") == false)) then
+    if dis() > 6 or cdEX("醉月") or this_player.nCurrentRage < 10 or haveMiankong() or tstatep("免控") or tstatep("闪避") or (mount("山居剑意") and (HaveTalent("惊涛") ==false or cdEX("惊涛") == false)) then
         return false
     end
-    if tnostate("冲刺") and tstate("眩晕|定身") and jiekong() then
+    if tnostate("冲刺") and tstate("眩晕|定身") and seeObj(target)>0 and jiekong() then
         return true
     end
     if tnostate("冲刺") and tstatep("免控") == false and tstate("击倒|眩晕|定身") == false then
@@ -694,7 +719,10 @@ function fenglaiwushan(weight)
     if dis() <=8 and (kongzhiTimeEX(1.5) or noSkillTime(1.5) or tota("千蝶吐瑞")) and weight <= 5 then
         return true
     end
-    if HaveTalent("层云") and dis() <=4 and target ~= nil and target.nRunSpeed < 22 and weight <= 5 then
+    if HaveTalent("层云") and dis() <=4 and target ~= nil and target.nRunSpeed < 22 and weight <= 5 and kongzhiTimeEX(1) then
+        return true
+    end
+    if HaveTalent("层云") and dis() <=4 and target ~= nil and target.nRunSpeed < 22 and weight <= 3 then
         return true
     end
     if HaveTalent("层云") == false and dis() <=4 and weight <= 5 then
@@ -711,7 +739,7 @@ function fengchayunjing(weight)
 
         return true
     end
-    if ttarget ~= nil and IsParty(ttarget) and (ttlife() < 60 and ttstate("眩晕|定身") or ttlife()< 40)then
+    if ttarget ~= nil and IsParty(ttarget) and (ttlife() < 60 or ttlife()< 40)then
         return true
     end
     if tbuff("枭泣|曳光") then
@@ -793,10 +821,10 @@ function fengchuihe()
 end
 function jingtao()
     ---惊涛
-    if HaveTalent("惊涛") == false or this_player.nCurrentRage < 10 or cdEX("惊涛") or dis() > 8 or tstatep("免控") or tstatep("闪避") then
+    if HaveTalent("惊涛") == false or this_player.nCurrentRage < 10 or cdEX("惊涛") or dis() > 8 or haveMiankong() or tstatep("免控") or tstatep("闪避") then
         return false
     end
-    if tnostate("冲刺") and tstate("定身|爬起") and jiekong()then
+    if tnostate("冲刺") and tstate("定身|爬起") and seeObj(target)>0 and jiekong()then
         --print("惊涛1111")
         return true
     end
@@ -814,8 +842,13 @@ function xieliubaoshi(weight)
         return false
     end
     -- 内功列表："洗髓经","易筋经","紫霞功","太虚剑意","花间游","离经易道","傲血战意","铁牢律","云裳心经","冰心诀","问水诀","山居剑意","毒经","补天诀","惊羽诀","天罗诡道","焚影圣诀","明尊琉璃体","铁骨衣","分山劲","笑尘诀","莫问","相知","北傲诀"
-
-    if (weight <= 9 or tmount("补天诀|离经易道|相知|云裳心经")) and kongzhiTimeEX(1) then
+    if ttarget ~= nil and IsParty(ttarget) and ttlife() < 60 then
+        return true
+    end
+    if weight <= 10 and tmount("补天诀|离经易道|相知|云裳心经") and kongzhiTimeEX(1) then
+        return true
+    end
+    if weight <= 7 and kongzhiTimeEX(1) then
         return true
     end
     if weight <= 5 then
@@ -1059,7 +1092,7 @@ function findTarget(outTarger)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if outTarger == false or v ~= target then
                 ---如果需要排除当前目标
@@ -1118,7 +1151,7 @@ function findTargetforHp(hp)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -1179,7 +1212,7 @@ function findTargetforRange(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -1232,18 +1265,18 @@ function tab(weight)
         print("目标重伤")
 
     end
-    if IsParty(target) then
-        if target ~=nil then
-            SetTarget(save_target)
-        end
-    else
-        if target ~=nil then
-            save_target = target
-        end
-    end
-    if  target == nil and save_target~=nil then
-        save_target = target
-    end
+    --if IsParty(target) then
+    --    if target ~=nil then
+    --        SetTarget(save_target)
+    --    end
+    --else
+    --    if target ~=nil then
+    --        save_target = target
+    --    end
+    --end
+    --if  target == nil and save_target~=nil then
+    --    save_target = target
+    --end
         --if life() <=40 then
     --	local naima = FindPlayer(40, "离经易道|云裳心经|补天诀|相知", "队友")
     --	if naima and GetDist(naima)>6 then
@@ -1261,7 +1294,7 @@ function tab(weight)
         local target
         --遍历队伍成员
         for k, v in ipairs(GetAllMember()) do
-            if IsPlayer(v.dwID) and IsParty(v) and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
+            if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false and GetDist(this_player, v) < 15 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
                 local tate = GetState(v)
                 if (string.find("眩晕|定身", tate)~=nil and objLife(v) <= 80) or objLife(v) <= 60 then
                     --先保存当前对象
@@ -1281,7 +1314,7 @@ function tab(weight)
         local target
         --遍历队伍成员
         for k, v in ipairs(GetAllMember()) do
-            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
+            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and objState(v, "重伤")==false and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
                 local tate = GetState(v)
                 if string.find("冲刺", tate) ==nil then
                     --先保存当前对象
@@ -1321,17 +1354,43 @@ function tab(weight)
     --    lastSelectTime = GetTickCount()
     --    findTarget(true)
     --end
-    if tlife() > 40 then
-        findTargetforHp(40)
+    if tlife() > 20 then
+        findTargetforHp(20)
     end
 end
 
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
+    local fNpc,count = FindNpc(player, "风来吴山", 10, "敌对")
+    if count>0 then
+        skill("扶摇直上")
+        skill("蹑云逐月")
+        skill("鹤归孤山")
+        return
+    end
     this_player = player
     mbuff = GetBuff(player)
     target, tclass = GetTarget(player)
     if target ~= nil then
+        --跟随当前目标
+        if save_target ==nil then
+            save_target = target
+        end
+        if isGensui and IsDangerArea(target, "敌对") then
+            MoveAction_StopAll()
+        else
+            if isMianxiang then
+                TurnTo(target)
+            end
+            if isGensui then
+                MoveForwardStart()
+            end
+            if isRaobei then
+                toBack()
+            end
+        end
+        ----------------------------------
+
         tbuffList = GetBuff(target)
         ttarget, ttclass = GetTarget(target)
         if ttarget ~= nil then
@@ -1348,21 +1407,7 @@ function Main(player)
             MoveAction_StopAll()
             return
         end
-        --跟随当前目标
 
-            if isGensui and IsDangerArea(target, "敌对") then
-                MoveAction_StopAll()
-            else
-                if isMianxiang then
-                    TurnTo(target)
-                end
-                if isGensui then
-                    MoveForwardStart()
-                end
-                if isRaobei then
-                    toBack()
-                end
-            end
 
 
         --if GetHeight(player)>0 then
@@ -1377,6 +1422,10 @@ function Main(player)
             return
         end
         DPS(weight)
+    --else
+    --    if save_target~=nil then
+    --        SetTarget(save_target)
+    --    end
     end
 end
 

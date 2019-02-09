@@ -1,5 +1,6 @@
 
 AddOption("自动面向")
+szScriptDesc = "作者：keima\n说明：脚本说明\n奇穴：[烟霞][放歌][清风垂露][厥阴指][轻弃][寒碧][清流][金屋][生息][生脉][轻鸿][南风吐月]"
 
 local save_target
 local target
@@ -82,6 +83,10 @@ function buff(list)
     mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, list) > 0
 end
+function buffcs(list)
+    mbuff = GetBuff(this_player)
+    return GetBuffStack(mbuff, list)
+end
 function tbuff(list)
     tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
@@ -131,7 +136,7 @@ function ttdis()
     return GetDist(this_player, ttarget)
 end
 
-function rseeme(seeme)
+function rseeme()
     local seemecount, seemet = GetSeeMe(20)
     return seemecount
 end
@@ -520,6 +525,11 @@ function jiekong()
     end
     return true
 end
+function death()
+    local deathskill = {100,}
+                       --星楼
+end
+
 function boom()
     local count = 0
     if gettbufftime("钟林毓秀")>10 then
@@ -548,7 +558,7 @@ function yushijufen(weight)
     if dis()>20 or cdEX("玉石俱焚") then
         return false
     end
-    if weight<=10 and boom()>=3 then
+    if weight<=8 and boom()>=3 then
         return true
     end
     if weight<=2 and boom()>=2 then
@@ -556,12 +566,14 @@ function yushijufen(weight)
     end
     return false
 end
-function furongbingdi()
+function furongbingdi(weight)
 ---芙蓉并蒂
     if dis()>20 or cdEX("芙蓉并蒂") then
         return false
     end
-
+    if (tbufftime("钟林毓秀",13) or tbufftime("兰摧玉折",13) or tbufftime("商阳指",13)) and cdEX("玉石俱焚")==false and weight<=8 then
+        return true
+    end
     if tbufftime("钟林毓秀",13) or tbufftime("兰摧玉折",13) then
         if tnostate("冲刺") and tstatep("免控")==false and tstate("定身") and jiekong()then
             return true
@@ -570,6 +582,7 @@ function furongbingdi()
             return true
         end
     end
+
     return false
 end
 function lancuiyuzhe()
@@ -577,7 +590,7 @@ function lancuiyuzhe()
     if dis()>20 or cdEX("兰摧玉折") then
         return false
     end
-    if (not tbuffisme("兰摧玉折") or tbufftime("兰摧玉折",8)) and (buff(412) or buff(8458))  then
+    if (not tbuffisme("兰摧玉折") or tbufftime("兰摧玉折",8)) and (buff("流离") or buff(412) or buff(8458))  then
         return true
     end
     if state("站立") and not tbuffisme("兰摧玉折") or tbufftime("兰摧玉折",8) then
@@ -600,7 +613,7 @@ function luansaqinghe(weight)
     if dis()>20 or cdEX("乱洒青荷") then
         return false
     end
-    if weight<=6 and cdEX("玉石俱焚") then
+    if weight<=5 and cdEX("玉石俱焚") then
         return true
     end
     return false
@@ -610,10 +623,10 @@ function shuiyuewujian(weight)
     if dis()>20 or cdEX("水月无间") then
         return false
     end
-    if weight<=8 and tbuffisme("兰摧玉折") then
+    if weight<=6 and tbuffisme("兰摧玉折") then
         return true
     end
-    if weight<=6 then
+    if weight<=4 then
         return true
     end
     return false
@@ -637,7 +650,7 @@ function shangyangzhi()
     if dis()>20 then
         return false
     end
-    if not tbuffisme("商阳指") or tbufftime("商阳指",10)  then
+    if (not tbuffisme("商阳指") or tbufftime("商阳指",10)) and (state("站立") or buff(412) or buff(8458))  then
         return true
     end
     return false
@@ -672,7 +685,7 @@ function qingfengchuilu()
 end
 function jueyinzhi()
     ---厥阴指
-    if not HaveTalent("厥阴指") or cdEX("厥阴指") then
+    if not HaveTalent("厥阴指") or cdEX("厥阴指") or dis()>20 then
         return false
     end
     if tIsota() then
@@ -698,7 +711,7 @@ function xinglouyueying(weight)
     if state("击倒") and (weight <= 8 or life() <= 80)  then
         return true
     end
-    if state("眩晕|定身|锁足") and cdEX2("太阴指") and (weight <= 8 or life() <= 80)  then
+    if state("眩晕|定身") and cdEX2("太阴指") and (weight <= 8 or life() <= 80)  then
         return true
     end
     return false
@@ -726,23 +739,26 @@ end
 
 function zhouweiguadu()
         ---向非当前目标释放商阳指跟阳明指
+        --print("向非当前目标释放商阳指跟阳明指")
         local players = GetAllPlayer()
         for k, v in ipairs(players) do
             --v是玩家对象
-            if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
-                if yangmingbuff[v.dwID] ~=nil then
-                    if (GetTickCount() - yangmingbuff[v.dwID] ) < 17000 then
+            if IsPlayer(v.dwID) and IsEnemy(v)  and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
+                if yangmingbuff[v.dwID] ~=nil and buffcs("放歌")>1 then
+                    if (GetTickCount() - yangmingbuff[v.dwID] ) > 18000 then
                         CastTo("阳明指",v,false)
                     end
                 else
-                    CastTo("阳明指",v,false)
+                    if buffcs("放歌")>1 then
+                        CastTo("阳明指",v,false)
+                    end
                 end
-                if shangyangbuff[v.dwID] ~=nil then
-                    if (GetTickCount() - shangyangbuff[v.dwID] ) < 17000 then
+                if shangyangbuff[v.dwID] ~=nil  then
+                    if (GetTickCount() - shangyangbuff[v.dwID] ) > 18000 then
                         CastTo("商阳指",v,false)
                     end
                 else
-                    CastTo("商阳指",v,false)
+                        CastTo("商阳指",v,false)
                 end
             end
         end
@@ -751,16 +767,7 @@ end
 function DPS(weight)
 
 
-    ---春泥护花
-    if chunnihuhua() then
-        Cast("春泥护花", true, true)
-    end
-    if taiyinzhi(weight) then
-        Cast("太阴指", true, true)
-    end
-    if xinglouyueying(weight) then
-        Cast("星楼月影", true, true)
-    end
+
     if shuiyuewujian(weight) then
         Cast("水月无间", true, true)
     end
@@ -770,20 +777,20 @@ function DPS(weight)
     end
     ---玉石俱焚
     if yushijufen(weight) then
-        if furongbingdi() then
-            skillEX("芙蓉并蒂")
-        else
-            if shuiyuewujian(weight) then
-                Cast("水月无间", true, true)
-            end
+        --if furongbingdi() then
+        --    skillEX("芙蓉并蒂")
+        --else
+        --    if shuiyuewujian(weight) then
+        --        Cast("水月无间", true, true)
+        --    end
             skillEX("玉石俱焚")
-        end
+        --end
     end
 
     if yangmingzhi() then
         skillEX("阳明指")
     end
-    if furongbingdi() then
+    if furongbingdi(weight) then
         skill("芙蓉并蒂")
     end
     if shangyangzhi() then
@@ -803,10 +810,7 @@ function DPS(weight)
     end
 
 
-    ---[清风垂露]
-    if qingfengchuilu() then
-        Cast("清风垂露", true, true)
-    end
+
     ---碧水滔天
     if bishuitaotian() then
         Cast("碧水滔天", true, true)
@@ -815,8 +819,7 @@ function DPS(weight)
     if qingxinjingqi() then
         Cast("清心静气", true, true)
     end
-    ---向非当前目标释放商阳指跟阳明指
-    zhouweiguadu()
+
 
 end
 
@@ -830,7 +833,7 @@ function findTarget(outTarger)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if outTarger == false or v ~= target then
                 ---如果需要排除当前目标
@@ -889,7 +892,7 @@ function findTargetforHp(hp)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -950,7 +953,7 @@ function findTargetforRange(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -1027,31 +1030,34 @@ function tab(weight)
     --		end
     --	end
     --end
-    if cdEX("春泥护花") == false or ( HaveTalent("清风垂露") and cdEX("清风垂露") == false ) or ( HaveTalent("南风吐月") and cdEX("南风吐月") == false )then
-        ---如果探梅没CD 并且目标是敌对
-        local target
-        --遍历队伍成员
-        for k, v in ipairs(GetAllMember()) do
-            if IsPlayer(v.dwID) and IsParty(v) and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
-                local tate = GetState(v)
-                if  objLife(v) <= 60 then
-                    --先保存当前对象
-                        CastTo("春泥护花", v, true)
-                    print("给春泥护花")
-                    --return 1
-                end
-                if  HaveTalent("南风吐月") and objLife(v) <= 30 then
-                    --先保存当前对象
-                    CastTo("南风吐月", v, true)
-                    print("给春泥护花")
-                    --return 1
-                end
-                if qusan(v) then
-                    CastTo("清风垂露", v, true)
-                end
-            end
-        end
-    end
+    --if IsInArena()  then
+    --    if cdEX("春泥护花") == false  or ( HaveTalent("清风垂露") and cdEX("清风垂露") == false)  or ( HaveTalent("南风吐月") and cdEX("南风吐月") == false)then
+    --        ---如果探梅没CD 并且目标是敌对
+    --        local target
+    --        --遍历队伍成员
+    --        for k, v in ipairs(GetAllMember()) do
+    --            if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
+    --                local tate = GetState(v)
+    --                if cdEX("春泥护花") == false  and  objLife(v) <= 60 then
+    --                    --先保存当前对象
+    --                    CastTo("春泥护花", v, true)
+    --                    print("给春泥护花")
+    --                    --return 1
+    --                end
+    --                if  HaveTalent("南风吐月")  and cdEX("南风吐月") == false and objLife(v) <= 30 then
+    --                    --先保存当前对象
+    --                    CastTo("南风吐月", v, true)
+    --                    print("给春泥护花")
+    --                    --return 1
+    --                end
+    --                if HaveTalent("清风垂露") and cdEX("清风垂露") == false and qusan(GetBuff(v))and objLife(v) <= 60 then
+    --                 CastTo("清风垂露", v, true)
+    --                end
+    --            end
+    --        end
+    --    end
+    --
+    --end
     --print("当前目标是否是队友",IsParty(target))
     --if cdEX("探梅") and IsParty(target) and life() >40 then
     --	if save_target ~= nil then
@@ -1082,15 +1088,35 @@ function tab(weight)
     end
 end
 
---Main函数，1个参数是自己的玩家对象，每秒调用16次
-function Main(player)
-    this_player = player
-    mbuff = GetBuff(player)
+function seurvival(weight)
+    ---生存向技能
     --南风吐月
     if nanfengtuyue() then
         Cast("南风吐月",true,true)
     end
+    ---[清风垂露]
+    if qingfengchuilu() then
+        Cast("清风垂露", true, true)
+    end
+    if xinglouyueying(weight) then
+        Cast("星楼月影", true, true)
+    end
+    ---春泥护花
+    if chunnihuhua() then
+        Cast("春泥护花", true, true)
+    end
 
+    if taiyinzhi(weight) then
+        Cast("太阴指", true, true)
+    end
+
+
+end
+
+--Main函数，1个参数是自己的玩家对象，每秒调用16次
+function Main(player)
+    this_player = player
+    mbuff = GetBuff(player)
     target, tclass = GetTarget(player)
     if target ~= nil then
         tbuffList = GetBuff(target)
@@ -1099,6 +1125,11 @@ function Main(player)
             ttbuffList = GetBuff(ttarget)
         end
         local weight = getWeight()
+        seurvival(weight)
+        ---向非当前目标释放商阳指跟阳明指
+        if  rseeme()==0 and GetSkillCD("商阳指") ==0 and cdEX("玉石俱焚") then
+            zhouweiguadu()
+        end
         --print("weight:",weight)
         tab(weight)
         if tbuff("盾立") then
@@ -1113,13 +1144,18 @@ function Main(player)
         --if GetHeight(player)>0 then
         --	Jump()
         --end
-
-
         if IsParty(target) then
             return
         end
-        DPS(weight)
+        if GetFace(target)>=0 and GetFace(target) <=90 then
+            DPS(weight)
+        end
+
     end
+
+    --if rseeme()>0 and GetSkillCD("商阳指") >0 and state("站立") then
+    --    Cast(9007)  --后跳
+    --end
 end
 
 

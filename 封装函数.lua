@@ -1,3 +1,6 @@
+AddOption("自动绕背")
+AddOption("自动面向")
+AddOption("自动跟随")
 local save_target
 local target
 local tclass
@@ -7,14 +10,29 @@ local tbuffList
 local ttarget
 local ttclass
 local ttbuffList
-local gcdsj=0.2 --gcd时间
+local gcdsj = 0.1 --gcd时间
+local help = false
+local lastSelectTime = 0
+local isprint = true
+local isGensui= GetOption("自动跟随")
+local isRaobei= GetOption("自动绕背")
+local isMianxiang= GetOption("自动面向")
+--szScriptDesc = "作者：keima\n说明：脚本说明\n奇穴：[腾焰飞芒][无往不复][燎原烈火][善法肉身][烈血灼芒][秽孽如形][善恶如梦][超然物外][生灭予夺][秘影诡行][伏明众生][冥月渡心]"
 function ota(desc)
     local mota, motatime, motaratio = GetPrepare()
-    return string.find(desc, mota)
+    return string.find(desc, mota)~=nil
 end
 function tota(desc)
     local mota, motatime, motaratio = GetPrepare(target)
-    return string.find(desc, mota)
+    return string.find(desc, mota)~=nil
+end
+function tIsota()
+    local mota, motatime, motaratio = GetPrepare(target)
+    return motatime>0
+end
+function objIsota(obj)
+    local mota, motatime, motaratio = GetPrepare(obj)
+    return motatime>0
 end
 function objLife(obj)
     if obj == nil then
@@ -59,6 +77,9 @@ function buff(list)
     return GetBuffTime(mbuff, list) > 0
 end
 function tbuff(list)
+    if target==nil then
+        return false
+    end
     tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
 end
@@ -79,7 +100,10 @@ function skillEX2(skillid)
     Cast(skillid, true, true)
 end
 function dis()
-    return GetDist(target)
+    if not target then
+        return 999
+    end
+    return GetPreciseDecimal(GetDist(target),2)
 end
 function his()
     if target == nil or tclass == NPC then
@@ -87,8 +111,45 @@ function his()
     end
     return GetHeight(target)
 end
+function haveMiankong()
+    if target == nil then
+        return false
+    end
+    local talent = GetTalentInfo(target)
+    if talent["风身"]~=nil and buff("女娲补天") then
+        return true
+    end
+    return false
+end
 function dis2()
-    return GetDist2D(target)
+    return GetPreciseDecimal(GetDist2D(target),2)
+end
+function isyueda()
+    return (GetCastTime(this_player,18629)>0 and GetCastTime(this_player,18629)<10)
+end
+function isguangmingxiang()
+    return (GetCastTime(this_player,3969)>0 and GetCastTime(this_player,3969)<1)
+
+end
+--function qusan(obj)
+--
+--    return GetBuffType(obj,"混元性气劲")>0 or GetBuffType(obj,"阴性气劲")>0
+--            or GetBuffType(obj,"混元性不利效果")>0 or GetBuffType(obj,"毒性不利效果")>0 or
+--            GetBuffType(obj,"点穴不利效果")>0
+--end
+function GetPreciseDecimal(nNum, n)
+    if type(nNum) ~= "number" then
+        return nNum;
+    end
+    n = n or 0;
+    n = math.floor(n)
+    if n < 0 then
+        n = 0;
+    end
+    local nDecimal = 10 ^ n
+    local nTemp = math.floor(nNum * nDecimal);
+    local nRet = nTemp / nDecimal;
+    return nRet;
 end
 function ttdis()
     return GetDist(this_player, ttarget)
@@ -101,22 +162,27 @@ end
 
 function state(desc)
     local tate = GetState(this_player)
-    return string.find(desc, tate)
+    return string.find(desc, tate)~=nil
 end
 function tstate(desc)
     if target == nil then
         return false
     end
     local tstate = GetState(target)
-    return string.find(desc, tstate)
+    return string.find(desc, tstate)~=nil
 end
 function mount(desc)
     local school = GetMount(this_player)
     --print(school)
-    return string.find(desc, school)
+    return string.find(desc, school)~=nil
+end
+function objmount(obj,desc)
+    local school = GetMount(obj)
+    --print(school)
+    return string.find(desc, school)~=nil
 end
 function tmount(desc)
-    if tclass == NPC then
+    if tclass == NPC or target==nil then
         return false
     end
 
@@ -125,7 +191,7 @@ function tmount(desc)
     if school == nil then
         return false
     end
-    return string.find(desc, school)
+    return string.find(desc, school)~=nil
 end
 
 function statep(desc)
@@ -144,7 +210,7 @@ function tstatep(desc)
     if target == nil then
         return false
     end
-    --print(desc)
+    tbuffList = GetBuff(target)
     return GetTypeTime(tbuffList, desc) > 0
 end
 function tstate(desc)
@@ -191,7 +257,9 @@ function objNotWudi(obj)
     end
     return true
 end
-
+function zhanyi()
+    return this_player.nCurrentRage
+end
 function isManri()
     ---判断是否满日
     return this_player.nSunPowerValue>0
@@ -209,63 +277,13 @@ function getMoon()
     return (this_player.nCurrentMoonEnergy/100)
 end
 ---权重计算
-function getWeight()
-    --获取自己的buff数据
-    --local mbuff = GetBuff(player)
-    --获取目标的buff数据
-    --local tbuffList = GetBuff(target)
-
-    local wudi = "镇山河|平沙落雁|鬼斧神工|散流霞|笼花|盾立|南风吐月|笑醉狂|太虚|力挽狂澜|啸如虎|浴火|不动|蚀心蛊"
-    local jianshang80 = "9696|7119|368|10307"
-    --清绝影歌 轮回 守如山 笑傲光阴
-    local jianshang70 = "8421|10493|1802|384"
-    --坚韧 无相决 御天 转乾坤
-    local jianshang60 = "6264|11319|8300|13044|9836|9206|6200"
-    --春泥护花 临渊蹈河 盾墙 无相诀 摩咭 万籁之寂  龙啸九天
-    local jianshang50 = "9810|6315|10014|8427|9803|6306|2983|1412|3068"
-    --舍身 零落 绝歌 荣辉 无相诀 光明相 无我 屹立不倒 雾体
-    local jianshang40 = "9873|2953|1187|399|9693|6279|11920|8839|6637|6636|6257|5744|6163|9874|9293|12530|122|6240|12656|9208|8495|6248"
-    --曳光 圣手织天 西宗 无相决 清绝影歌 贪魔体 春泥护花 圣手织天 圣手织天 圣手织天 春泥护花 贪魔体 守如山 散影 残影 乘龙戏水 春泥护花 玄水蛊 水榭花盈 万籁之寂 捍卫 枯残蛊
-    local jianshang30 = "9510|11457|9895|9745|9896|8302|12286|2177|10051|9510|5641|6262|6160|5806|5705|2813|6247"
-    --青霄飞羽 易水 志酬 朝圣 盾舞 肃列 左旋右转 正骨 杯水留影 青霄飞羽 金甲 金屋 雷心 大明 舍身 随风 蛊影
-    local jianshang20 = "2983|7790|7171|6378|6209|5746"
-    --无我 龙战 善护 驯致 无相决 流光囚影
-    local jianshang10 = "11272|9904|9763|11344|6333|6610|5750|10024|12411|8424|6540|6337|6237|5770|4479|6113"
-    --初熟 叠泉 春辞 春辞 上将军印 纵横 归去来 归寂道 袈裟 乘龙戏水 坚定 归山 贞护 圣涌 桃僵 折冲 千机神速
-    local miankong = "菩提身|青阳|突|零落|笑醉狂|出渊|吞日月|龙跃于渊|蛊虫献祭|碧蝶献祭|风蜈献祭|不工|力拔|飞鸢逐月|秘影|浮空|浮空|星楼月影|归酣|素衿|超然|灵辉|生死之交|素衿|啸日|星楼月影|转乾坤|转乾坤|圣体|流火飞星|宽野|霸体|千斤坠|须弥|烟雨行|霸体|酒中仙|纵轻骑|任驰骋|生太极|生太极|行天道|蛊虫狂暴|松烟竹雾·miankong|斗室无尘|斗室无尘|捣衣|石间意|尘身|尘身|破重围|音韵|探梅|捣衣|孤影|净果|捍卫|劫化|西楚悲歌|盾墙|绝伦逸群|千蝶吐瑞|盾毅|千险|无惧|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|鹊踏枝|尘身|破月|青霄飞羽|浮空|青蒂|水月无间|折骨|蚀心蛊|玉泉鱼跃|蛊影|噬蛊|免疫控制|青霄飞羽|遁影"
-    local shanbi80 = "10619|9846|9783"
-    --雾雨|惊鸿游龙 鹊踏枝
-    local shanbi60 = "6434|9783|5668|9736"
-    --醉逍遥 鹊踏枝 风吹荷 慈悲愿
-
-    local shanbi50 = "2065|6299|8866|677"
-    --云稀松 御风而行 鹊踏枝 鹊踏枝
-    local shanbi40 = "6174|4028|10618"
-    --两生 圣月佑 雾雨
-    local shanbi30 = "4931|6146"
-    --龙悔 日升
-    local shanbi20 = "4710|6142|3310|948"
-    --旷劫 冰天 游龙 花月凌风六阵
-    local shanbi10 = "857|10465|6289|10617"
-    --闪躲 鸟翔碧空 慈悲 雾雨
-
-    local fengnei = { "八卦洞玄|抢珠式|厥阴指|寒月耀|清音长啸|梅花针|凄切|蟾啸夺命|蟾啸枯残|蟾啸迷心|蟾啸迷心|缠竹|剑破虚空|沉默|雷霆震怒" }
-    local chenmo = "雷云|剑飞惊天|兰摧玉折|沉默|剑飞惊天|止息|井仪|沉默|风切|剑心通明|震慑"
-    local jianliao = "活祭|禁疗|息疗|清绝影歌|玄一|盾击|地龙钻|减疗|神龙降世|穿心弩|霹雳|蝎蛰|恒河劫沙|尘息|吞楚|百足夺命|百足枯残|百足迷心|楚济|清绝影歌"
-    local jidao = { "割据秦宫|踏宴扬旗|击倒" }
-    local suozu = { "擒龙|冻土|割据秦宫|逐星箭|琴音|复征|物我|影狱|钟林毓秀|剑·羽|落雁|滞|五方行尽|碎冰|百足|太阴指|禁缚|伏夜·缠|流光囚影|幽月|圣蝎献祭|刖足|铁爪|孔雀翎|袖手|天蛛献祭|影滞|百足夺命|百足枯残|百足迷心|五方行尽|三才化生|吐故纳新|绕足|止水|影痕|锁足" }
-    local dingshen = { "缠心|点苍|定身|无助|安患|金针|天绝地灭|迷影|大道无术|伏夜·定|丝牵|幻蛊|绛唇珠袖|松涛|同归|破势|太阴指|完骨|帝骖龙翔|傍花随柳|芙蓉并蒂|七星拱瑞|余音|幻蛊|定身|剑神无我|大道无术" }
-    local yunxuan = { "眩晕|千斤坠|裁骨|割据秦宫|迷神钉|薄伐|贯木流华|无名魂锁|盾猛|盾毅|撼地|醉逍遥|净世破魔击|幻光步|虎贲|弩击|善护|镇魔|伏夜·晕|重伤|雷震子|日影|剑冲阴阳|北斗|蝎心夺命|蝎心枯残|蝎心迷心|断魂刺|碧王|鹤归孤山|危楼|醉月|当头一敲|中注|破坚阵|蝎毒针|震慑|大狮子吼|五蕴皆空|突|战吼眩晕|追魂|日劫|峰插云景|崩" }
-    local jiaoxie = "浮云|霞流|怖畏暗刑|缴械"
-    local youxian3 = { "补天诀", "花间游", "相知" }
-    local youxian2 = { "莫问", "焚影圣决", "惊羽诀", "天罗诡道", "傲血战意", "紫霞功", "笑尘决" }
-    local youxian1 = { "离经易道", "云裳心经", "太虚剑意", "冰心诀" }
-
+function getWeight(isOut)
+    ---isOut  如果是外功就判断是否是有闪避
     local weight = 10
     --OutputinGame("---------------------------------")
-    if GetBuffTime(tbuffList, wudi) > 0 then
-        weight = weight + 100
-    end
+    --if GetBuffTime(tbuffList, wudi) > 0 then
+    --    weight = weight + 100
+    --end
     if tstatep("无敌") then
         --如果目标可控制
         weight = weight + 100
@@ -274,103 +292,79 @@ function getWeight()
         --如果目标可控制
         weight = weight + 100
     end
-    if GetBuffTime(tbuffList, wudi) > 0 then
-        weight = weight + 100
+    if tstatep("减伤90") then
+        weight = weight+9
     end
-    if GetBuffTime(tbuffList, jianshang80) > 0 then
-        weight = weight + 8
-        --OutputinGame("jianshang80")
+    if tstatep("减伤80") then
+        weight = weight+8
     end
-    if GetBuffTime(tbuffList, jianshang70) > 0 then
-        weight = weight + 7
-        --OutputinGame("jianshang70")
+    if tstatep("减伤70") then
+        weight = weight+7
     end
-    if GetBuffTime(tbuffList, jianshang60) > 0 then
-        weight = weight + 6
-        --OutputinGame("jianshang60")
+    if tstatep("减伤60") then
+        weight = weight+6
+    end
+    if tstatep("减伤50") then
+        weight = weight+5
+    end
+    if tstatep("减伤40") then
+        weight = weight+4
+    end
+    if isOut then
+        if tstatep("减伤30") then
+            weight = weight+3
+        end
+        if tstatep("闪避100") then
+            weight = weight+100
+        end
+        if tstatep("闪避70") then
+            weight = weight+7
+        end
+        if tstatep("闪避60") then
+            weight = weight+6
+        end
+        if tstatep("闪避50") then
+            weight = weight+5
+        end
+        if tstatep("闪避40") then
+            weight = weight+4
+        end
+        if tstatep("闪避30") then
+            weight = weight+3
+        end
+        if tstatep("闪避20") then
+            weight = weight+3
+        end
 
     end
-    if GetBuffTime(tbuffList, jianshang50) > 0 then
-        weight = weight + 5
-        --OutputinGame("jianshang50")
-    end
-    if GetBuffTime(tbuffList, jianshang40) > 0 then
-        weight = weight + 4
-        --OutputinGame("jianshang40")
-    end
-    if GetBuffTime(tbuffList, jianshang30) > 0 then
-        weight = weight + 3
-        --OutputinGame("jianshang30")
-    end
-    if GetBuffTime(tbuffList, jianshang20) > 0 then
-        weight = weight + 2
-        --OutputinGame("jianshang20")
-    end
-    if GetBuffTime(tbuffList, jianshang10) > 0 then
-        weight = weight + 1
-        --OutputinGame("jianshang10")
-    end
-    --if GetBuffTime(tbuffList, shanbi80) > 0 then
-    --    weight = weight + 8
-    --    --OutputinGame("shanbi80")
+    --if tstatep("沉默") then
+    --    --如果目标可控制
+    --    weight = weight - 2
     --end
-    --if GetBuffTime(tbuffList, shanbi60) > 0 then
-    --    weight = weight + 6
-    --    --OutputinGame("shanbi60")
+    --if tstatep("缴械") then
+    --    --如果目标可控制
+    --    weight = weight - 2
     --end
-    --if GetBuffTime(tbuffList, shanbi50) > 0 then
-    --    weight = weight + 5
-    --    --OutputinGame("shanbi50")
+    --if tstatep("封内") then
+    --    --如果目标可控制
+    --    weight = weight - 2
     --end
-    --if GetBuffTime(tbuffList, shanbi40) > 0 then
-    --    weight = weight + 4
-    --    --OutputinGame("shanbi40")
+    --if tstatep("禁疗") then
+    --    --如果目标可控制
+    --    weight = weight - 2
     --end
-    --if GetBuffTime(tbuffList, shanbi30) > 0 then
-    --    weight = weight + 3
-    --    --OutputinGame("shanbi30")
+    ----if tstatep("定身") then
+    ----    --如果目标可控制
+    ----    weight = weight - 1
+    ----end
+    ----if tstatep("眩晕") then
+    ----    --如果目标可控制
+    ----    weight = weight - 1
+    ----end
+    --if tstatep("击倒") then
+    --    --如果目标可控制
+    --    weight = weight - 1
     --end
-    --if GetBuffTime(tbuffList, shanbi20) > 0 then
-    --    weight = weight + 2
-    --    --OutputinGame("shanbi20")
-    --end
-    --if GetBuffTime(tbuffList, shanbi10) > 0 then
-    --    weight = weight + 1
-    --    --OutputinGame("shanbi10")
-    --end
-
-    if GetBuffTime(tbuffList, jianliao) > 0 then
-        weight = weight - 3
-        --OutputinGame("shanbi10")
-    end
-    if tstatep("沉默") then
-        --如果目标可控制
-        weight = weight - 3
-    end
-    if tstatep("缴械") then
-        --如果目标可控制
-        weight = weight - 3
-    end
-    if tstatep("封内") then
-        --如果目标可控制
-        weight = weight - 3
-    end
-    if tstatep("禁疗") then
-        --如果目标可控制
-        weight = weight - 3
-    end
-    if tstatep("定身") then
-        --如果目标可控制
-        weight = weight - 1
-    end
-    if tstatep("眩晕") then
-        --如果目标可控制
-        weight = weight - 1
-    end
-    if tstatep("击倒") then
-        --如果目标可控制
-        weight = weight - 2
-    end
     --if GetBuffTime(tbuffList,chenmo) then
     --	weight = weight -3
     --	--OutputinGame("shanbi10")
@@ -430,6 +424,23 @@ end
 --	end
 --	return false
 --end
+function boom()
+    local count = 0
+    if bufftime("钟林毓秀")>10 then
+        count = count+1
+    end
+    if bufftime("兰摧玉折")>10 then
+        count = count+1
+    end
+    if bufftime("商阳指")>10 then
+        count = count+1
+    end
+    return count
+end
+function bufftime(id)
+    mbuff = GetBuff(this_player)
+    return GetBuffTime(mbuff, id)
+end
 ---缴械时间
 function jiaoxieTime()
     tbuffList = GetBuff(target)
@@ -502,11 +513,13 @@ function chenmoTime()
     end
     return 0
 end
-
+function onHorse()
+    return this_player.bOnHorse
+end
 function cdEX(skill)
     ---通过已经释放的技能时间来判断技能是否cd
     --if skill()
-    print(skill)
+    --print(skill)
     return GetSkillSCD(skill) > 0
 end
 function cdEX2(skill)
@@ -517,6 +530,10 @@ end
 function kongzhiTimeEX(time)
     --print(time)
     return dingshenTime() >= time or yunxuanTime() >= time or jidaoTime() >= time
+end
+function kongzhi()
+    --print(time)
+    return dingshenTime() > 0 or yunxuanTime() >0 or jidaoTime() >0
 end
 function jiekongTimeEX(time)
     return (dingshenTime() > 0 and dingshenTime() < time) or (yunxuanTime() > 0 and yunxuanTime() < time) or (jidaoTime() > 0 and jidaoTime() < time)
@@ -531,11 +548,100 @@ function jiekongTimeEX3(time)
 end
 ---不能丢技能的时间
 function noSkillTime(time)
-    return (fengneiTime() > 0 and fengneiTime() > time) or (chenmoTime() > 0 and chenmoTime() > time) or (jiaoxieTime() > 0 and jiaoxieTime() > time)
+    return  fengneiTime() > time or  chenmoTime() > time or  jiaoxieTime() > time
+end
+
+function seeObj(obj)
+    local count = 0
+    if obj ==nil then
+        return 0
+    end
+    --遍历队伍成员
+    for k, v in ipairs(GetAllMember()) do
+        if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false  then
+            local z_target, z_tclass = GetTarget(v)
+            if z_target and obj.dwID == z_target.dwID then
+                count = count+1
+            end
+        end
+    end
+    return count
+end
+function findNoSeediren()
+    ---寻找没人看的目标
+    local seeObjList = {}
+    --遍历队伍成员
+    for k, v in ipairs(GetAllMember()) do
+        if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false  then
+            local z_target, z_tclass = GetTarget(v)
+            seeObjList[k] = z_target
+        end
+    end
+    for k, v in ipairs(GetAllMember()) do
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and  GetDist(this_player, v) < 8 and IsVisible(this_player, v)  then
+            local nosee = true
+            for see_k, see_v in ipairs(seeObjList) do
+                if v ==see_v then
+                    nosee = false
+                end
+            end
+            if nosee then
+                return v
+            end
+        end
+    end
+end
+function nojiekong(obj,skill,chixu,time)
+    return GetCastTime(obj,skill)>chixu and GetCastTime(obj,skill)<time
+end
+function death(obj)
+    ---抓点   化蝶2228
+    ---疾如风
+    if nojiekong(obj,412,3,50) then
+        return true
+    end
+    ---盅虫献祭    女娲补天
+    if objmount(obj,"补天诀") and  nojiekong(obj,2226,4,30) and nojiekong(obj,2230,20,54) then
+        return true
+    end
+    ---锻骨决
+    if nojiekong(obj,257,8,35) then
+        return true
+    end
+    ---蝶弄足   鹊踏枝
+    if objmount(obj,"冰心诀|云裳心经") and GetCastCount(obj,574,75)>2 and GetCastCount(obj,550,75)>2 then
+        return true
+    end
+    ---星楼  太阴指
+    if objmount(obj,"花间游|离经易道") and  nojiekong(obj,100,4,18) and GetCastCount(obj,228,22)>2 then
+        return true
+    end
+    ---散流霞
+    if objmount(obj,"北傲诀") and  GetCastCount(obj,16608,40)>3 then
+        return true
+    end
+    return false
+end
+function needTui(obj)
+    ---需要推
+    if target ==nil then
+        return false
+    end
+    ---献祭
+    local npc,count = FindNpc(target, "59171", 8, "敌对")
+    if count>0 then
+        return true
+    end
+    ---生太极,吞日月
+    npc,count = FindNpc(target, "气场生太极|气场吞日月", 18, "敌对")
+    if count>0 then
+        return true
+    end
+    return false
 end
 function toBack()
     ---自动绕背
-    if GetDist(target) < 2 then
+    if GetDist(target) <=3 then
         if IsBack(target) then
             MoveForwardStop()
         else
@@ -543,7 +649,16 @@ function toBack()
         end
     end
 end
-
+function toFor()
+    ---自动绕背
+    if GetDist(target) <=3 then
+        if IsBack(target) then
+            StrafeLeftStop()
+        else
+            StrafeLeftStart()
+        end
+    end
+end
 function findTarget(outTarger)
     ---是否排除当前目标
     ---寻找适合的目标
@@ -553,7 +668,7 @@ function findTarget(outTarger)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if outTarger == false or v ~= target then
                 ---如果需要排除当前目标
@@ -612,7 +727,7 @@ function findTargetforHp(hp)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and v.IsHaveBuff(203, 0) == false and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and  objmount(v,"凌海决")==false and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -673,7 +788,7 @@ function findTargetforRange(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and v.IsHaveBuff(9695, 0) == false and v.IsHaveBuff(10212, 0) == false then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
             --如果不是我
             if objLife(v) == 0 or objState(v, "重伤") then
                 weight = weight + 100
@@ -720,9 +835,9 @@ function findTargetforRange(range)
     end
 end
 
---Main函数，1个参数是自己的玩家对象，每秒调用16次
-function Main(player)
+function setAll(player)
     this_player = player
+    --print("111")
     mbuff = GetBuff(player)
     target, tclass = GetTarget(player)
     if target ~= nil then
@@ -731,16 +846,6 @@ function Main(player)
         if ttarget ~= nil then
             ttbuffList = GetBuff(ttarget)
         end
-        local weight=getWeight()
-        --print("weight:",weight)
-        tab(weight)
-        --跟随当前目标
-        FollowTarget()
-        toBack()
-        TurnTo(target)
-        --if GetHeight(player)>0 then
-        --	Jump()
-        --end
-        DPS(weight)
+    return target
     end
 end
