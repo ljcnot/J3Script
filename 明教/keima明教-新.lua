@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.lua")
+LoadLib("Macro\\封装函数.txt")
 local target
 local this_player
 local gcdsj = 0.1 --gcd时间
@@ -705,9 +705,9 @@ function tab(weight)
     --    lastSelectTime = GetTickCount()
     --    findTarget(true)
     --end
-    --if tlife() > 20 then
-    --    findTargetforHp(20)
-    --end
+    if tlife() > 20 and not tmount("离经易道|云裳心经|补天诀|相知") then
+        findTargetforHp(20)
+    end
 end
 
 --Main函数，1个参数是自己的玩家对象，每秒调用16次

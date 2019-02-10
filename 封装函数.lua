@@ -41,7 +41,11 @@ function objLife(obj)
     local bfb = (obj.nCurrentLife / obj.nMaxLife) * 100
     return bfb
 end
-
+function lastSkill(skill,time)
+    local time123 = GetCastTime(this_player, skill)
+    --5秒内放过指定技能，注意要判断大于等于0
+    return time123 >= 0 and time123 < time
+end
 function life()
     if this_player == nil then
         return 999
@@ -116,7 +120,7 @@ function haveMiankong()
         return false
     end
     local talent = GetTalentInfo(target)
-    if talent["风身"]~=nil and buff("女娲补天") then
+    if talent["风身"]~=nil and tbuff("女娲补天") then
         return true
     end
     return false
@@ -177,6 +181,9 @@ function mount(desc)
     return string.find(desc, school)~=nil
 end
 function objmount(obj,desc)
+    if obj == NPC or obj==nil then
+        return false
+    end
     local school = GetMount(obj)
     --print(school)
     return string.find(desc, school)~=nil
@@ -627,6 +634,9 @@ function needTui(obj)
     if target ==nil then
         return false
     end
+    if tbuff("疾电叱羽")then
+        return true
+    end
     ---献祭
     local npc,count = FindNpc(target, "59171", 8, "敌对")
     if count>0 then
@@ -641,7 +651,7 @@ function needTui(obj)
 end
 function toBack()
     ---自动绕背
-    if GetDist(target) <=3 then
+    if target and  GetDist(target) <=4 then
         if IsBack(target) then
             MoveForwardStop()
         else
