@@ -208,7 +208,7 @@ function fenglaiwushan(weight)
     if dis() <=8 and ((death(target) and kongzhi() )or tota("千蝶吐瑞")) and life() <= 50 then
         return true
     end
-    if  dis() <=4 and target ~= nil and target.nRunSpeed < 22 and weight <= 5 then
+    if  dis() <=4 and target ~= nil and target.nRunSpeed < 22 and not cdEX("峰插云景")  and weight <= 5 then
         return true
     end
     if HaveTalent("层云") == false and dis() <=4 and life() <= 50 and not tstatep("免控") then
@@ -227,12 +227,25 @@ function fengchayunjing(weight)
     if needTui(target) then
         return true
     end
+    ---风来吴山
+    local npc,count = FindNpc(this_player, "57739", 10, "自己")
+    if count>0 and objIsZhengmian(npc) and GetDist(this_player,npc)<=6 and objIsZhengmian(target) then
+        return true
+    end
+    local npc,count = FindNpc(this_player, "57739", 10, "队友")
+    if count>0 and objIsZhengmian(npc) and GetDist(this_player,npc)<=6 and objIsZhengmian(target) then
+        return true
+    end
+    local npc,count = FindNpc(this_player, "57739", 10, "敌对")
+    if count>0 and GetFace(npc)>=0 and GetFace(npc)<=80 and GetDist(this_player,npc)<=6 then
+        return true
+    end
     if cdEX("云飞玉皇") or weight > 8 or tstate("眩晕|定身|爬起")  or lastSkill(1647,1) or lastSkill(1649,1) then
         return false
     end
-    if weight >= 6 and weight <= 8 and buff("凤鸣")  and (tstatep("免控") or (tmount("山居剑意") and (cdEX("惊涛") or HaveTalent("惊涛")) and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")) ) then
-        return true
-    end
+    --if weight >= 6 and weight <= 8 and buff("凤鸣")  and (tstatep("免控") or (tmount("山居剑意") and (cdEX("惊涛") or HaveTalent("惊涛")) and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")) ) then
+    --    return true
+    --end
     if weight <= 2 and (tstatep("免控") or ((tmount("山居剑意") and (cdEX("惊涛") or HaveTalent("惊涛")) and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")))) then
         return true
     end
@@ -547,15 +560,15 @@ function tab(weight)
         print("目标重伤")
 
     end
-    --if IsParty(target) then
-    --    if target ~=nil then
-    --        SetTarget(save_target)
-    --    end
-    --else
-    --    if target ~=nil then
-    --        save_target = target
-    --    end
-    --end
+    if  target and  IsParty(target) then
+        if target ~=nil then
+            SetTarget(save_target)
+        end
+    else
+        if target ~=nil then
+            save_target = target
+        end
+    end
     --if  target == nil and save_target~=nil then
     --    save_target = target
     --end
@@ -595,9 +608,9 @@ function tab(weight)
         local target
         --遍历队伍成员
         for k, v in ipairs(GetAllMember()) do
-            if IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and objState(v, "重伤")==false and GetHeight(v)>8 and IsVisible(this_player, v) and v~=this_player  and objNotWudi(v) then
+            if IsPlayer(v.dwID) and IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and objState(v, "重伤")==false and GetHeight(v)>8 and IsVisible(this_player, v)  and objNotWudi(v) then
                 local tate = GetState(v)
-                if string.find("冲刺", tate) ==nil then
+                if (string.find("冲刺", tate) ==nil and not state("锁足")) or (state("锁足") and string.find("冲刺", tate) ==nil and IsBack(v) ) then
                     --先保存当前对象
                     if ota("风来吴山") then
                         CastTo("松舍问霞", v, true)
@@ -671,10 +684,12 @@ function Main(player)
         ttarget, ttclass = GetTarget(target)
     end
     local weight = getWeight(true)
-    if weight>3 and IsDangerArea(player, "敌对") then
-        if target then
-            BackTo(target)
-        end
+    if weight>3 and femgche(player, "敌对") then
+            if target then
+                if femgche(target, "敌对") then
+                    BackTo(target)
+                end
+            end
         MoveForwardStart()
         if state("眩晕|击倒|定身") then
             Cast("啸日", true, true)
@@ -694,7 +709,7 @@ function Main(player)
 
     --wuminghunsuo(weight)
     seurvival(weight)
-    if target and  IsDangerArea(target, "敌对") then
+    if target and  femgche(target, "敌对") then
         if isRun then
             MoveAction_StopAll()
             isRun=false
@@ -704,7 +719,14 @@ function Main(player)
         isRun= true
         TurnTo(target)
         MoveForwardStart()
-        toBack()
+        ---风来吴山
+        local npc,count = FindNpc(this_player, "57739", 10, "自己")
+        if count>0 then
+            toRao()
+        else
+            StrafeLeftStop()
+            toBack()
+        end
     end
     if tbuff("盾立") or tbuff("无明魂锁") then
         StopAction()

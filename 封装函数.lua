@@ -73,6 +73,12 @@ function face()
     end
     return GetFace(target)
 end
+function objIsZhengmian(obj)
+    if obj == nil then
+        return false
+    end
+    return GetFace(obj)>=0 and GetFace(obj)<=15
+end
 function isPositive()
     return face() >= 0 and face() <= 15
 end
@@ -448,8 +454,15 @@ function bufftime(id)
     mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, id)
 end
+function tbufftime(id)
+    tbuffList = GetBuff(target)
+    return GetBuffTime(tbuffList, id)
+end
 ---缴械时间
 function jiaoxieTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "缴械")
     if time then
@@ -459,6 +472,9 @@ function jiaoxieTime()
 end
 ---眩晕时间
 function yunxuanTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "眩晕")
     if time then
@@ -468,6 +484,9 @@ function yunxuanTime()
 end
 ---定身时间
 function dingshenTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "定身")
     if time then
@@ -477,6 +496,9 @@ function dingshenTime()
 end
 ---锁足时间
 function suozuTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "锁足")
     if time then
@@ -486,6 +508,9 @@ function suozuTime()
 end
 ---击倒时间
 function jidaoTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "击倒")
     if time then
@@ -495,6 +520,9 @@ function jidaoTime()
 end
 ---减疗时间
 function jianliaoTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "减疗")
     if time then
@@ -504,6 +532,9 @@ function jianliaoTime()
 end
 ---封内时间
 function fengneiTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "封内")
     if time then
@@ -513,6 +544,9 @@ function fengneiTime()
 end
 ---沉默时间
 function chenmoTime()
+    if target==nil then
+        return 0
+    end
     tbuffList = GetBuff(target)
     local time = GetTypeTime(tbuffList, "沉默")
     if time then
@@ -557,7 +591,19 @@ end
 function noSkillTime(time)
     return  fengneiTime() > time or  chenmoTime() > time or  jiaoxieTime() > time
 end
-
+function femgche(obj,relation)
+    ---风来吴山
+    local npc,count = FindNpc(obj, "57739", 10, relation)
+    if count>0 then
+        return true
+    end
+    ---湛然若海
+    npc,count = FindNpc(obj, "63709", 6, relation)
+    if count>0 then
+        return true
+    end
+    return false
+end
 function seeObj(obj)
     local count = 0
     if obj ==nil then
@@ -568,6 +614,23 @@ function seeObj(obj)
         if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false  then
             local z_target, z_tclass = GetTarget(v)
             if z_target and obj.dwID == z_target.dwID then
+                count = count+1
+            end
+        end
+    end
+    return count
+end
+function seeObjEX(obj)
+    ---不带奶妈
+    local count = 0
+    if obj ==nil then
+        return 0
+    end
+    --遍历队伍成员
+    for k, v in ipairs(GetAllMember()) do
+        if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false and not objmount(v,"离经易道|云裳心经|补天诀|相知")  then
+            local z_target, z_tclass = GetTarget(v)
+            if z_target and obj.dwID == z_target.dwID  then
                 count = count+1
             end
         end
@@ -659,6 +722,14 @@ function toBack()
         end
     end
 end
+function toRao()
+    ---自动绕背
+    if target and  GetDist(target) <=4 then
+        StrafeLeftStart()
+    else
+        StrafeLeftStop()
+    end
+end
 function toFor()
     ---自动绕背
     if GetDist(target) <=3 then
@@ -668,6 +739,23 @@ function toFor()
             StrafeLeftStart()
         end
     end
+end
+function findRangeCount(range)
+    ---获取指定范围内的敌对目标数量
+    ---range  范围
+    if range == nil then
+        return nil
+    end
+    ---寻找适合的目标
+    local players = GetAllPlayer()
+    local count = 0
+    for k, v in ipairs(players) do
+        --v是玩家对象
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false  and GetDist(this_player, v) < range then
+            count= count+1
+        end
+    end
+    return count
 end
 function findTarget(outTarger)
     ---是否排除当前目标

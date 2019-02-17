@@ -288,11 +288,11 @@ function tab(player)
 end
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
-    if IsHotKeyDown(1) then
-        local mbuff = GetBuff(player)
-        CancelBuff(mbuff, "骑御")
-        Jump()
-    end
+    --if IsHotKeyDown(1) then
+    --    local mbuff = GetBuff(player)
+    --    CancelBuff(mbuff, "骑御")
+    --    Jump()
+    --end
    local target =  setAll(player)
     tab(player)
     --if target then
