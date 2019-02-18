@@ -1,5 +1,6 @@
 LoadLib("Macro\\封装函数.lua")
 local target
+local tclass
 local this_player
 local gcdsj = 0.1 --gcd时间
 local lastSelectTime = 0
@@ -55,10 +56,10 @@ function shengsijie()
     if haveMiankong() then
         return false
     end
-    if tnostate("冲刺") and tstate("击倒|眩晕|定身") == false and tstatep("免控") == false then
+    if death(target) and tnostate("冲刺") and tstate("击倒|眩晕|定身") == false and tstatep("免控") == false then
         return true
     end
-    if tnostate("冲刺") and tstate("眩晕|定身") and seeObj(target) > 0 and jiekong() and tstatep("免控") == false then
+    if death(target) and tnostate("冲刺") and tstate("眩晕|定身") and seeObj(target) > 0 and jiekong() and tstatep("免控") == false then
         return true
     end
 
@@ -99,10 +100,9 @@ function quyeduanchou()
 end
 function buweianxing(weight)
     ---怖畏暗刑
-    if dis() > 6 or noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
+    if tclass==NPC or dis() > 6  or  noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
         return false
     end
-
     --if weight<=8 and  kongzhiTimeEX(1) then
     --    if cdEX("怖畏暗刑") and cdEX("生灭予夺")==false then
     --        skillEX2("暗尘弥散")
@@ -117,6 +117,7 @@ function buweianxing(weight)
     if tbuff("乱洒青荷") or tbuff("心无旁骛") then
         return true
     end
+
     if tlife() <= 50 then
         --if cdEX("怖畏暗刑") and cdEX("生灭予夺") == false then
         --    skillEX2("暗尘弥散")
@@ -128,9 +129,10 @@ function buweianxing(weight)
         --end
         return true
     end
-    if tlife() <= 100 and (tmount("补天诀|离经易道|相知|云裳心经") or not IsInArena()) then
+    if tlife() <= 100 and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
         return true
     end
+
     return false
 end
 function shengmieyuduo()
@@ -390,9 +392,9 @@ function manri()
     if jingshipomoji() then
         skillEX("净世破魔击")
     end
-    --if HaveTalent("善恶如梦") and shengsijie() then
-    --    skillEX("生死劫")
-    --end
+    if HaveTalent("善恶如梦") and shengsijie() then
+        skillEX("生死劫")
+    end
 end
 function manyue()
 
@@ -403,9 +405,9 @@ function manyue()
         skillEX("净世破魔击")
     end
     ---满月输出
-    --if shengsijie() then
-    --    skillEX("生死劫")
-    --end
+    if shengsijie() then
+        skillEX("生死劫")
+    end
 end
 function yinshen()
     ---隐身输出
@@ -415,15 +417,19 @@ function DPS(weight)
     --if buff("贪魔体") and life()> 60 and weight<=3 and (getMoon()>=60 or getSun()>=60) then
     --    CancelBuff(mbuff, "贪魔体")
     --end
+
     if jileyin(weight) then
         skillEX2("极乐引")
     end
+
     if target and  not femgche(target, "敌对") and liuguangqiuying(weight) then
         skill("流光囚影")
     end
+
     if buweianxing(weight) then
         skillEX("怖畏暗刑")
     end
+
     if shengmieyuduo() then
         skillEX2("暗尘弥散")
         skill("流光囚影")
@@ -479,181 +485,6 @@ function seurvival(weight)
 end
 
 
-function findTarget(outTarger)
-    ---是否排除当前目标
-    ---寻找适合的目标
-    local players = GetAllPlayer()
-    local lastTar = nil
-    local lastWeight = 100
-    for k, v in ipairs(players) do
-        --v是玩家对象
-        local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objNotWudi(v) then
-            --如果不是我
-            if outTarger == false or v ~= target then
-                ---如果需要排除当前目标
-                if objLife(v) == 0 or objState(v, "重伤") then
-                    weight = weight + 100
-                end
-                if objLife(v) > 80 and objLife(v) <= 90 then
-                    weight = weight - 1
-                end
-                if objLife(v) > 70 and objLife(v) <= 80 then
-                    weight = weight - 2
-                end
-                if objLife(v) > 60 and objLife(v) <= 70 then
-                    weight = weight - 3
-                end
-                if objLife(v) > 50 and objLife(v) <= 60 then
-                    weight = weight - 4
-                end
-                if objLife(v) > 40 and objLife(v) <= 50 then
-                    weight = weight - 5
-                end
-                if objLife(v) > 30 and objLife(v) <= 40 then
-                    weight = weight - 6
-                end
-                if objLife(v) > 20 and objLife(v) <= 30 then
-                    weight = weight - 7
-                end
-                if objLife(v) > 10 and objLife(v) <= 20 then
-                    weight = weight - 8
-                end
-                if objLife(v) > 0 and objLife(v) <= 10 then
-                    weight = weight - 9
-                end
-                if objState(v, "眩晕|击倒|僵直|定身") then
-                    weight = weight - 3
-                end
-                if lastWeight > weight then
-                    lastWeight = weight
-                    lastTar = v
-                end
-            end
-        end
-    end
-    ---如果遍历的目标不等于nil
-    if lastTar ~= nil then
-        SetTarget(lastTar)
-    end
-end
-function findTargetforHp(hp)
-    ---获取指定血量的敌对目标
-
-    ---寻找适合的目标
-    local players = GetAllPlayer()
-    local lastTar = nil
-    local lastWeight = 100
-    for k, v in ipairs(players) do
-        --v是玩家对象
-        local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and objmount(v, "凌海决") == false and objState(v, "重伤") == false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
-            --如果不是我
-            if objLife(v) == 0 or objState(v, "重伤") then
-                weight = weight + 100
-            end
-            if objLife(v) > 80 and objLife(v) <= 90 then
-                weight = weight - 1
-            end
-            if objLife(v) > 70 and objLife(v) <= 80 then
-                weight = weight - 2
-            end
-            if objLife(v) > 60 and objLife(v) <= 70 then
-                weight = weight - 3
-            end
-            if objLife(v) > 50 and objLife(v) <= 60 then
-                weight = weight - 4
-            end
-            if objLife(v) > 40 and objLife(v) <= 50 then
-                weight = weight - 5
-            end
-            if objLife(v) > 30 and objLife(v) <= 40 then
-                weight = weight - 6
-            end
-            if objLife(v) > 20 and objLife(v) <= 30 then
-                weight = weight - 7
-            end
-            if objLife(v) > 10 and objLife(v) <= 20 then
-                weight = weight - 8
-            end
-            if objLife(v) > 0 and objLife(v) <= 10 then
-                weight = weight - 9
-            end
-            if objState(v, "眩晕|击倒|僵直|定身") then
-                weight = weight - 3
-            end
-            if lastWeight > weight then
-                lastWeight = weight
-                lastTar = v
-            end
-        end
-    end
-    ---如果遍历的目标不等于nil
-    if lastTar ~= nil then
-        print("选择40%血的目标")
-        SetTarget(lastTar)
-    end
-end
-
-function findTargetforRange(range)
-    ---获取指定范围内的敌对目标
-    ---range  范围
-    if range == nil then
-        return nil
-    end
-    ---寻找适合的目标
-    local players = GetAllPlayer()
-    local lastTar = nil
-    local lastWeight = 100
-    for k, v in ipairs(players) do
-        --v是玩家对象
-        local weight = 10
-        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false and IsDangerArea(v, "敌对") == false and GetDist(this_player, v) < range and IsVisible(this_player, v) and objNotWudi(v) then
-            --如果不是我
-            if objLife(v) == 0 or objState(v, "重伤") then
-                weight = weight + 100
-            end
-            if objLife(v) > 80 and objLife(v) <= 90 then
-                weight = weight - 1
-            end
-            if objLife(v) > 70 and objLife(v) <= 80 then
-                weight = weight - 2
-            end
-            if objLife(v) > 60 and objLife(v) <= 70 then
-                weight = weight - 3
-            end
-            if objLife(v) > 50 and objLife(v) <= 60 then
-                weight = weight - 4
-            end
-            if objLife(v) > 40 and objLife(v) <= 50 then
-                weight = weight - 5
-            end
-            if objLife(v) > 30 and objLife(v) <= 40 then
-                weight = weight - 6
-            end
-            if objLife(v) > 20 and objLife(v) <= 30 then
-                weight = weight - 7
-            end
-            if objLife(v) > 10 and objLife(v) <= 20 then
-                weight = weight - 8
-            end
-            if objLife(v) > 0 and objLife(v) <= 10 then
-                weight = weight - 9
-            end
-            if objState(v, "眩晕|击倒|僵直|定身") then
-                weight = weight - 3
-            end
-            if lastWeight > weight then
-                lastWeight = weight
-                lastTar = v
-            end
-        end
-    end
-    ---如果遍历的目标不等于nil
-    if lastTar ~= nil then
-        SetTarget(lastTar)
-    end
-end
 
 function tab(weight)
     if objState(target, "重伤") or tbuff("雷霆震怒") then
@@ -736,7 +567,7 @@ function Main(player)
         Cast("暗尘弥散", true, true)
     end
     InteractNpc("遗失的货物")
-    target = setAll(player)
+    target,tclass = setAll(player)
     local weight = getWeight(false)
 
     if weight>3 and femgche(player, "敌对") then

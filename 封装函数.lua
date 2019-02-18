@@ -46,6 +46,15 @@ function lastSkill(skill,time)
     --5秒内放过指定技能，注意要判断大于等于0
     return time123 >= 0 and time123 < time
 end
+
+function mana()
+    if this_player == nil then
+        return 0
+    end
+    local bfb = (this_player.nCurrentMana / this_player.nMaxMana) * 100
+    return bfb
+end
+
 function life()
     if this_player == nil then
         return 999
@@ -557,6 +566,12 @@ end
 function onHorse()
     return this_player.bOnHorse
 end
+function objOnHorse(obj)
+    if obj==nil then
+        return false
+    end
+    return obj.bOnHorse
+end
 function cdEX(skill)
     ---通过已经释放的技能时间来判断技能是否cd
     --if skill()
@@ -944,6 +959,6 @@ function setAll(player)
         if ttarget ~= nil then
             ttbuffList = GetBuff(ttarget)
         end
-    return target
+    return target,tclass
     end
 end
