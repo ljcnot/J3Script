@@ -1,4 +1,6 @@
 LoadLib("Macro\\封装函数.lua")
+AddOption("自动跟随")
+
 local laststate
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
@@ -8,7 +10,7 @@ function Main(player)
         print(state)
         laststate=state
     end
-    Cast("酒中仙",true,false)
+print(GetOption("自动跟随"))
 end
 
 

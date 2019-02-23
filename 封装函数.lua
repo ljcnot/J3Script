@@ -1,6 +1,4 @@
-AddOption("自动绕背")
-AddOption("自动面向")
-AddOption("自动跟随")
+
 local save_target
 local target
 local tclass
@@ -14,9 +12,7 @@ local gcdsj = 0.1 --gcd时间
 local help = false
 local lastSelectTime = 0
 local isprint = true
-local isGensui= GetOption("自动跟随")
-local isRaobei= GetOption("自动绕背")
-local isMianxiang= GetOption("自动面向")
+
 --szScriptDesc = "作者：keima\n说明：脚本说明\n奇穴：[腾焰飞芒][无往不复][燎原烈火][善法肉身][烈血灼芒][秽孽如形][善恶如梦][超然物外][生灭予夺][秘影诡行][伏明众生][冥月渡心]"
 function ota(desc)
     local mota, motatime, motaratio = GetPrepare()
@@ -32,7 +28,15 @@ function tIsota()
 end
 function objIsota(obj)
     local mota, motatime, motaratio = GetPrepare(obj)
+    --print(mota,motatime,motaratio)
     return motatime>0
+end
+function objIsotaDesc(obj,desc)
+    if obj==nil then
+        return false
+    end
+    local mota, motatime, motaratio = GetPrepare(obj)
+    return string.find(desc, mota)~=nil
 end
 function objLife(obj)
     if obj == nil then
@@ -53,6 +57,12 @@ function mana()
     end
     local bfb = (this_player.nCurrentMana / this_player.nMaxMana) * 100
     return bfb
+end
+function qidian()
+    if this_player == nil then
+        return 0
+    end
+    return this_player.nAccumulateValue
 end
 
 function life()
@@ -102,6 +112,20 @@ function tbuff(list)
     tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
 end
+function tbuffCS(list)
+    if target==nil then
+        return false
+    end
+    tbuffList = GetBuff(target)
+    return GetBuffStack(tbuffList, list,true)
+end
+function tbufftime(id)
+    if target==nil then
+        return false
+    end
+    tbuffList = GetBuff(target)
+    return GetBuffTime(tbuffList, id)
+end
 function bufftime(id)
     mbuff = GetBuff(this_player)
     return GetBuffTime(mbuff, id)
@@ -112,7 +136,9 @@ function skill(skillid)
 end
 function skillEX(skillid)
     ---打断当前读条
-    CastTo(skillid, target, true)
+    if target then
+        CastTo(skillid, target, true)
+    end
 end
 function skillEX2(skillid)
     ---打断当前读条
@@ -123,6 +149,12 @@ function dis()
         return 999
     end
     return GetPreciseDecimal(GetDist(target),2)
+end
+function objDis(obj)
+    if not obj then
+        return 999
+    end
+    return GetPreciseDecimal(GetDist(obj),2)
 end
 function his()
     if target == nil or tclass == NPC then
@@ -271,6 +303,16 @@ function CastTime(skillid, time)
 end
 function objNotWudi(obj)
     local wudi = { 203, 9695, 10212, 9934, 377 }
+    for k, v in ipairs(wudi) do
+        if obj.IsHaveBuff(v, 0) then
+            return false
+        end
+
+    end
+    return true
+end
+function objNotJiaoxie(obj)
+    local wudi = { 4053,12321 }
     for k, v in ipairs(wudi) do
         if obj.IsHaveBuff(v, 0) then
             return false
@@ -619,7 +661,7 @@ function femgche(obj,relation)
     end
     return false
 end
-function seeObj(obj)
+function seeObjForPart(obj)
     local count = 0
     if obj ==nil then
         return 0
@@ -635,15 +677,15 @@ function seeObj(obj)
     end
     return count
 end
-function seeObjEX(obj)
+function seeObjForEnemy(obj)
     ---不带奶妈
     local count = 0
     if obj ==nil then
         return 0
     end
     --遍历队伍成员
-    for k, v in ipairs(GetAllMember()) do
-        if IsPlayer(v.dwID) and IsParty(v) and objState(v, "重伤")==false and not objmount(v,"离经易道|云裳心经|补天诀|相知")  then
+    for k, v in ipairs(GetAllPlayer()) do
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and not objmount(v,"离经易道|云裳心经|补天诀|相知")  then
             local z_target, z_tclass = GetTarget(v)
             if z_target and obj.dwID == z_target.dwID  then
                 count = count+1
@@ -662,8 +704,8 @@ function findNoSeediren()
             seeObjList[k] = z_target
         end
     end
-    for k, v in ipairs(GetAllMember()) do
-        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and  GetDist(this_player, v) < 8 and IsVisible(this_player, v)  then
+    for k, v in ipairs(GetAllPlayer()) do
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and  GetDist(this_player, v) < 8 and IsVisible(this_player, v) and death(v)  then
             local nosee = true
             for see_k, see_v in ipairs(seeObjList) do
                 if v ==see_v then
@@ -677,9 +719,15 @@ function findNoSeediren()
     end
 end
 function nojiekong(obj,skill,chixu,time)
+    if IsNpc(obj.dwID) then
+        return false
+    end
     return GetCastTime(obj,skill)>chixu and GetCastTime(obj,skill)<time
 end
 function death(obj)
+    if obj==nil or  IsNpc(obj.dwID) then
+        return false
+    end
     ---抓点   化蝶2228
     ---疾如风
     if nojiekong(obj,412,3,50) then
@@ -767,6 +815,23 @@ function findRangeCount(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false  and GetDist(this_player, v) < range then
+            count= count+1
+        end
+    end
+    return count
+end
+function findMSRangeCount(range)
+    ---获取指定范围内的敌对目标数量
+    ---range  范围
+    if range == nil then
+        return nil
+    end
+    ---寻找适合的目标
+    local players = GetAllPlayer()
+    local count = 0
+    for k, v in ipairs(players) do
+        --v是玩家对象
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false and objOnHorse(v) and GetDist(this_player, v) < range then
             count= count+1
         end
     end

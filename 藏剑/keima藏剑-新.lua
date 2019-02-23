@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.lua")
+LoadLib("Macro\\封装函数.txt")
 local target
 local this_player
 local gcdsj = 0.1 --gcd时间
@@ -96,7 +96,7 @@ function zuiyue()
     if dis() > 6 or cdEX("醉月") or this_player.nCurrentRage < 10 or haveMiankong() or tstatep("免控") or tstatep("闪避") or (mount("山居剑意") and HaveTalent("惊涛") and cdEX("惊涛") == false) then
         return false
     end
-    if tnostate("冲刺") and tstate("眩晕|定身") and death(target) and seeObj(target)>0 and jiekong()  then
+    if tnostate("冲刺") and tstate("眩晕|定身") and death(target) and seeObjForPart(target)>0 and jiekong()  then
         return true
     end
     if tnostate("冲刺") and not tstatep("免控") and  not tstate("击倒|眩晕|定身") then
@@ -319,7 +319,7 @@ function jingtao()
     if HaveTalent("惊涛") == false or this_player.nCurrentRage < 10 or cdEX("惊涛") or dis() > 8 or haveMiankong() or tstatep("免控") or tstatep("闪避") then
         return false
     end
-    if tnostate("冲刺") and tstate("定身|爬起") and death(target)  and seeObj(target)>0 and jiekong()then
+    if tnostate("冲刺") and tstate("定身|爬起") and death(target)  and seeObjForPart(target)>0 and jiekong()then
         --print("惊涛1111")
         return true
     end
@@ -607,7 +607,7 @@ function tab(weight)
         ---如果探梅没CD 并且目标是敌对
         local target
         --遍历队伍成员
-        for k, v in ipairs(GetAllMember()) do
+        for k, v in ipairs(GetAllPlayer()) do
             if IsPlayer(v.dwID) and IsEnemy(v.dwID) and GetDist(this_player, v) < 20 and objState(v, "重伤")==false and GetHeight(v)>8 and IsVisible(this_player, v)  and objNotWudi(v) then
                 local tate = GetState(v)
                 if (string.find("冲刺", tate) ==nil and not state("锁足")) or (state("锁足") and string.find("冲刺", tate) ==nil and IsBack(v) ) then

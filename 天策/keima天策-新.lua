@@ -1,4 +1,4 @@
-LoadLib("Macro\\·â×°º¯Êı.lua")
+LoadLib("Macro\\·â×°º¯Êı.txt")
 
 function jiekong()
     if (GetSkillGCD("ºçÆø³¤¿Õ") + gcdsj) > dingshenTime() then
@@ -144,7 +144,7 @@ function duanhunci()
     if dis()<8 or dis()>27  or cdEX("¶Ï»ê´Ì") or tstatep("Ãâ¿Ø") or tstate("³å´Ì") then
         return false
     end
-    if tstate("Ñ£ÔÎ|¶¨Éí") and seeObj(target)>0 and jiekong() then
+    if tstate("Ñ£ÔÎ|¶¨Éí") and seeObjForPart(target)>0 and jiekong() then
         return true
     end
     if tstate("»÷µ¹|Ñ£ÔÎ|¶¨Éí") == false then
@@ -170,7 +170,7 @@ function pojianzhen()
     if dis()>4  or cdEX("ÆÆ¼áÕó") or tstatep("Ãâ¿Ø") or tstate("³å´Ì") then
         return false
     end
-    if tstate("»÷µ¹|Ñ£ÔÎ|¶¨Éí") and seeObj(target)>0 and jiekong() then
+    if tstate("»÷µ¹|Ñ£ÔÎ|¶¨Éí") and seeObjForPart(target)>0 and jiekong() then
         return true
     end
     if tstate("»÷µ¹|Ñ£ÔÎ|¶¨Éí") == false then

@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.lua")
+LoadLib("Macro\\封装函数.txt")
 local target
 local tclass
 local this_player
@@ -7,7 +7,9 @@ local lastSelectTime = 0
 local save_target
 local isRun = false
 local isDanger = false
-local jiaoxieNai = false
+local ttarget
+local ttclass
+
 function jiekong()
     if (GetSkillGCD("生死劫") + gcdsj) > dingshenTime() then
         return false
@@ -50,16 +52,11 @@ function yinyuezhan()
 end
 function shengsijie()
     ---生死劫
-    if dis() > 6 or GetCastCount(this_player, 3966, 10) >= 2 or (isManyue() == false and isManri() == false) or HaveTalent("幽隐尘迹") then
+    if dis() > 6   then
         return false
     end
-    if haveMiankong() then
-        return false
-    end
-    if death(target) and tnostate("冲刺") and tstate("击倒|眩晕|定身") == false and tstatep("免控") == false then
-        return true
-    end
-    if death(target) and tnostate("冲刺") and tstate("眩晕|定身") and seeObjForPart(target) > 0 and jiekong() and tstatep("免控") == false then
+
+    if not buff("纵遇善缘") and not buff("心火叹") then
         return true
     end
 
@@ -100,30 +97,24 @@ function quyeduanchou()
 end
 function buweianxing(weight)
     ---怖畏暗刑
-    if tclass==NPC  or  noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
+    if tclass==NPC or dis() > 6  or  noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
         return false
     end
-    local diduinaima = FindPlayer(6, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if diduinaima ~= nil and weight<=5 and objNotJiaoxie(diduinaima) then
-        CastTo("怖畏暗刑", diduinaima,true)
-        return false
-    end
-        diduinaima = FindPlayer(25, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if not tmount("补天诀|离经易道|相知|云裳心经") and not cdEX2("流光囚影") and weight<=5 and diduinaima and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) then
-        jiaoxieNai = true
-        save_target = target
-        SetTarget(diduinaima)
-        return false
-    end
-
-    if dis()>6 then
-        return false
-    end
+    --if weight<=8 and  kongzhiTimeEX(1) then
+    --    if cdEX("怖畏暗刑") and cdEX("生灭予夺")==false then
+    --        skillEX2("暗尘弥散")
+    --        skill("流光囚影")
+    --        skillEX2("生灭予夺")
+    --        --print("生灭")
+    --        return true
+    --    end
+    --    --print("缴械1")
+    --    return true
+    --end
     if tbuff("乱洒青荷") or tbuff("心无旁骛") then
         return true
     end
 
-    --
     --if tlife() <= 50 then
     --    --if cdEX("怖畏暗刑") and cdEX("生灭予夺") == false then
     --    --    skillEX2("暗尘弥散")
@@ -135,12 +126,10 @@ function buweianxing(weight)
     --    --end
     --    return true
     --end
-    if not jiaoxieNai and tlife() <= 100 and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
+    if tlife() <= 100 and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
         return true
     end
-    if jiaoxieNai and tlife() <= 100 and (isManyue() or isManri())  and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
-        return true
-    end
+
     return false
 end
 function shengmieyuduo()
@@ -394,86 +383,83 @@ end
 function manri()
     ---满日输出
     --
-    if  HaveTalent("善恶如梦") and shengsijieJianliao() then
+    if  shengsijie() then
         skillEX("生死劫")
     end
     if jingshipomoji() then
         skillEX("净世破魔击")
     end
-    if HaveTalent("善恶如梦") and shengsijie() then
-        skillEX("生死劫")
-    end
+
 end
 function manyue()
 
-    if shengsijieJianliao() then
+    if shengsijie() then
         skillEX("生死劫")
     end
     if jingshipomoji() then
         skillEX("净世破魔击")
     end
-    ---满月输出
-    if shengsijie() then
-        skillEX("生死劫")
-    end
 end
-function yinshen()
-    ---隐身输出
+function jiehuozhan()
+    ---戒火斩
+    if dis()>20 and cdEX("戒火斩") then
+        return false
+    end
+    return true
 end
-function kongnai(weight)
-    ---控制奶妈
-    if cdEX("怖畏暗刑") and (isManyue() or isManri()) then
-        SetTarget(save_target)
-        save_target = nil
-        jiaoxieNai=false
-        return
+function chaoshengyan()
+    ---朝圣言
+    if  cdEX("朝圣言") then
+        return false
     end
-    if buweianxing(weight) then
-        skillEX("怖畏暗刑")
+    if life()<=40 then
+        return true
     end
-    if target and  not femgche(target, "敌对") and liuguangqiuying(weight) then
-        skill("流光囚影")
+    return false
+end
+function xinhuotan()
+    ---心火叹
+    if dis()>8 and cdEX("心火叹") then
+        return false
     end
-
-    if hanyueyao() then
-        skill("寒月耀")
+    if not buff("纵遇善缘") then
+        return true
     end
-    if isManyue() then
-        manyue()
-    else
-        if isManri() then
-            manri()
-        end
+    return false
+end
+function cibeiyuan()
+    ---慈悲愿
+    if dis()>8 and cdEX("慈悲愿") then
+        return false
     end
-    if quyeduanchou() then
-        skillEX("驱夜断愁")
+    if ttarget and  ttarget.dwID~= this_player.dwID then
+        return true
     end
-    if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
-        yueling()
-    else
-        riling()
+    if life()<=80 then
+        return true
     end
-    if cdEX("扶摇直上") == false then
-        Cast("扶摇直上", true, true)
-    end
+    return false
 end
 function DPS(weight)
     --如果血量回来了就取消贪魔体
     --if buff("贪魔体") and life()> 60 and weight<=3 and (getMoon()>=60 or getSun()>=60) then
     --    CancelBuff(mbuff, "贪魔体")
     --end
+    if cibeiyuan() then
+        skill("慈悲愿")
 
+    end
+    if xinhuotan() then
+        skill("心火叹")
+
+    end
+    if jiehuozhan() then
+        skill("戒火斩")
+    end
     if jileyin(weight) then
         skillEX2("极乐引")
     end
 
-    if target and  not femgche(target, "敌对") and liuguangqiuying(weight) then
-        skill("流光囚影")
-    end
-
-    if buweianxing(weight) then
-        skillEX("怖畏暗刑")
-    end
 
     if shengmieyuduo() then
         skillEX2("暗尘弥散")
@@ -502,9 +488,6 @@ function DPS(weight)
             manri()
         end
     end
-    if quyeduanchou() then
-        skillEX("驱夜断愁")
-    end
     if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
         yueling()
     else
@@ -516,11 +499,12 @@ function DPS(weight)
 end
 function seurvival(weight)
     ---生存向技能
+    if chaoshengyan() then
+        Cast("朝圣言",true,true)
+
+    end
     if tanmoti() then
         Cast(3973, true, true)
-    end
-    if anchenmisan(weight) then
-        Cast("暗尘弥散", true, true)
     end
     if target and  not femgche(target, "敌对") and  huanguangbu(weight) then
         skill("幻光步")
@@ -537,13 +521,18 @@ function tab(weight)
         --print("目标重伤")
 
     end
-    --if jiaoxieNai and not tmount("补天诀|离经易道|相知|云裳心经") then
-    --    save_target = target.dwID
-    --
+    --if target and IsParty(target) then
+    --    if target ~= nil then
+    --        SetTarget(save_target)
+    --    end
+    --else
+    --    if target ~= nil then
+    --        save_target = target
+    --    end
     --end
-    --if target == nil and save_target ~= nil then
-    --    SetTarget(save_target)
-    --end
+    if target == nil and save_target ~= nil then
+        SetTarget(save_target)
+    end
     --if life() <=40 then
     --	local naima = FindPlayer(40, "离经易道|云裳心经|补天诀|相知", "队友")
     --	if naima and GetDist(naima)>6 then
@@ -584,20 +573,20 @@ function tab(weight)
     --	print("探梅完了")
     --end
     -----上次切换目标大于5秒才会换目标
-    if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
-        print("目标减伤过高")
-        lastSelectTime = GetTickCount()
-        findTarget(true)
-    end
+    --if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
+    --    print("目标减伤过高")
+    --    lastSelectTime = GetTickCount()
+    --    findTarget(true)
+    --end
     --
     --if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
     --    print("危险区域切换目标")
     --    lastSelectTime = GetTickCount()
     --    findTarget(true)
     --end
-    if tlife() > 20 and not tmount("离经易道|云裳心经|补天诀|相知") then
-        findTargetforHp(20)
-    end
+    --if tlife() > 20 and not tmount("离经易道|云裳心经|补天诀|相知") then
+    --    findTargetforHp(20)
+    --end
 end
 
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
@@ -607,56 +596,72 @@ function Main(player)
         Cast("暗尘弥散", true, true)
     end
     InteractNpc("遗失的货物")
+    if objIsota(player) then
+        return 1
+    end
     target,tclass = setAll(player)
+    if target then
+        ttarget, ttclass = GetTarget(target)
+    end
     local weight = getWeight(false)
 
-    if weight>3 and femgche(player, "敌对") then
-        if target then
-            if femgche(target, "敌对") then
-                BackTo(target)
-            else
-                skill("流光囚影")
-            end
-        end
+    --if weight>3 and femgche(player, "敌对") then
+    --    if target then
+    --        if femgche(target, "敌对") then
+    --            BackTo(target)
+    --        else
+    --            skill("流光囚影")
+    --        end
+    --    end
+    --    MoveForwardStart()
+    --    if state("眩晕|击倒|定身") then
+    --        Cast("暗尘弥散", true, true)
+    --    end
+    --    Cast("扶摇直上", true, true)
+    --    Jump()
+    --    Cast("蹑云逐月", true, true)
+    --
+    --    --Cast(3973, true, true)
+    --end
+    local npc,count = FindNpc(player, "地刺", 3, "敌对")
+    if count>0 then
         MoveForwardStart()
-        if state("眩晕|击倒|定身") then
-            Cast("暗尘弥散", true, true)
+        isRun=true
+    else
+        if isRun then
+            MoveForwardStop()
+            TurnTo(target)
+            isRun=false
         end
-        Cast("扶摇直上", true, true)
-        Jump()
-        Cast("蹑云逐月", true, true)
-
-        --Cast(3973, true, true)
     end
-
     --print("weight:",weight)
     tab(weight)
     seurvival(weight)
-    if wuminghunsuo(weight) then
-        skillEX("无明魂锁")
-    end
-    if target and  femgche(target, "敌对") then
-        TurnTo(target)
-        isDanger = true
-        if isRun then
-            MoveAction_StopAll()
-            isRun=false
-        end
-    else
-        isDanger = false
-        if target then
-            TurnTo(target)
-            isRun= true
-            MoveForwardStart()
-            toBack()
-        else
-            if isRun then
-                MoveAction_StopAll()
-                isRun=false
-            end
-        end
-
-    end
+    --if wuminghunsuo(weight) then
+    --    skillEX("无明魂锁")
+    --end
+    --if target and  femgche(target, "敌对") then
+    --    TurnTo(target)
+    --    isDanger = true
+    --    if isRun then
+    --        MoveAction_StopAll()
+    --        isRun=false
+    --    end
+    --else
+    --    isDanger = false
+    --    if target then
+    --        TurnTo(target)
+    --        isRun= true
+    --        MoveForwardStart()
+    --        toBack()
+    --    else
+    --        if isRun then
+    --            MoveAction_StopAll()
+    --            isRun=false
+    --        end
+    --    end
+    --
+    --end
     if tbuff("盾立") or tbuff("无明魂锁") or tbuff("雷霆震怒") then
         StopAction()
         return
@@ -676,20 +681,10 @@ function Main(player)
     if GetHeight(player) > 6 and dis() <= 4 then
         Jump()
     end
-    --if dis()<6 and not buweianxing(weight) and not quyeduanchou() and not shengsijieJianliao() and not shengsijie() and (yinyuezhan() or jingshipomoji()) and GetSkillGCD("生死劫")>0 then
-    --    StrafeLeftStart()
-    --    Jump()
-    --else
-    --    StrafeLeftStop()
-    --end
     if target and IsParty(target) then
         return
     end
-    if jiaoxieNai then
-        kongnai(weight)
-    else
-        DPS(weight)
-    end
+    DPS(weight)
 end
 
 --end

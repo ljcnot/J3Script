@@ -8,6 +8,7 @@ local save_target
 local isRun = false
 local isDanger = false
 local isdutiao=false
+local laststate
 
 function bogouchaotian()
     ---拨狗朝天
@@ -22,7 +23,7 @@ function kanglong(weight)
     if HaveTalent("洪荒") then
         distans = 8
     end
-    if dis()>distans or mana()<30 or target==nil  then
+    if dis()>distans or mana()<30 or target==nil or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if weight<= 10 or not tstatep("免控") then
@@ -30,19 +31,25 @@ function kanglong(weight)
     end
     return false
 end
-function tianxiawugou()
+function tianxiawugou(weight)
     ---天下无狗
-    if dis()>8 or mana()>30 or cdEX("天下无狗") then
+    if dis()>8 or mana()>30 or cdEX("天下无狗") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     return true
 end
 function bangdagoutou(weight)
     ---棒打狗头
-    if dis()>20 or cdEX("棒打狗头") then
+    if dis()>20 or cdEX("棒打狗头") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if not tstate("冲刺") and not tstatep("免控") and mana()<30 and cdEX("天下无狗") then
+        return true
+    end
+    if not tstate("冲刺") and  his()>8 and buff("烟霞") and mana()<10   then
+        return true
+    end
+    if not tstate("冲刺") and  his()>8 and not buff("烟霞") and mana()>=10   then
         return true
     end
     if not tstate("冲刺") and buff("烟霞") and mana()<10   then
@@ -56,9 +63,9 @@ function bangdagoutou(weight)
     end
     return false
 end
-function shuquanxiaori()
+function shuquanxiaori(weight)
     ---蜀犬吠日
-    if dis()>8 or cdEX("蜀犬吠日") or mana()>=10 then
+    if dis()>8 or cdEX("蜀犬吠日") or mana()>=10 or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if not tstatep("免控") then
@@ -66,19 +73,19 @@ function shuquanxiaori()
     end
     return false
 end
-function equanlanlu()
+function equanlanlu(weight)
     ---恶犬拦路
-    if dis()>10 or cdEX("恶犬拦路") or tstatep("封轻功") then
-        return false
+    if dis()>10 or cdEX("恶犬拦路") or tstatep("封轻功") or jiuzhongxian(weight) or xiaozuikuang() then
+    return false
     end
     if kongzhiTimeEX(1.5) then
-        return true
+    return true
     end
     return false
 end
 function longzhanyuye(weight)
     ---龙战于野
-    if dis()>15 or cdEX("龙战于野")  or mana()<20 then
+    if dis()>15 or cdEX("龙战于野")  or mana()<20  or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if not tstate("冲刺") and not buff("亢龙有悔") and weight>=4 then
@@ -91,8 +98,11 @@ function longzhanyuye(weight)
 end
 function longyueyuyuan(weight)
     ---龙跃于渊
-    if dis()>20 or cdEX("龙跃于渊") then
+    if dis()>20 or cdEX("龙跃于渊") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
+    end
+    if not tstate("冲刺") and target and  objOnHorse(target) then
+        return true
     end
     if not tstate("冲刺") and not tbuff("亢龙有悔") then
         return true
@@ -102,9 +112,9 @@ function longyueyuyuan(weight)
     end
     return false
 end
-function longyueyuyuanjiekong()
+function longyueyuyuanjiekong(weight)
     ---龙跃于渊
-    if dis()>20 or cdEX("龙跃于渊") then
+    if dis()>20 or cdEX("龙跃于渊") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if state("眩晕|定身|击倒|僵直") then
@@ -114,14 +124,17 @@ function longyueyuyuanjiekong()
 end
 function jiaolongfanjaing(weight)
     ---蛟龙翻江
-    if dis()>5 or mana()<10 or kanglong(weight)  then
+    if dis()>5 or mana()<10 or kanglong(weight) or jiuzhongxian(weight) or xiaozuikuang()  then
         return false
     end
-    return true
+    if mana()>30 then
+        return true
+    end
+    return false
 end
 function longxiaojiutian(weight)
     ---龙啸九天
-    if  (not HaveTalent("无咎") and mana()<30 ) or cdEX("龙啸九天") then
+    if  (not HaveTalent("无咎") and mana()<30 ) or cdEX("龙啸九天") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if life()<70 and not  statep("减伤") then
@@ -132,9 +145,9 @@ function longxiaojiutian(weight)
     end
     return false
 end
-function chenglongxishui()
+function chenglongxishui(weight)
     ---乘龙戏水
-    if   cdEX("乘龙戏水") then
+    if   cdEX("乘龙戏水") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if boom() >= 3 and life() <= 90 and statep("减伤") == false then
@@ -150,14 +163,20 @@ function chenglongxishui()
 end
 function jiuzhongxian(weight)
     ---酒中仙
-    if   cdEX("酒中仙") or weight<=3 or state("跳跃") then
+    if cdEX("酒中仙") or weight<=3 then
         return false
     end
-    return true
+    if not HaveTalent("宽野") and statep("免控") then
+        return true
+    end
+    if HaveTalent("宽野") then
+        return true
+    end
+    return false
 end
 function yanyuxing(weight)
     ---烟雨行
-    if cdEX2("烟雨行") or buff("烟霞") then
+    if cdEX2("烟雨行") or buff("烟霞") or jiuzhongxian(weight) or xiaozuikuang() then
         return false
     end
     if not  kanglong(weight) and cdEX("棒打狗头") and cdEX("天下无狗") and mana()<30 then
@@ -167,13 +186,13 @@ function yanyuxing(weight)
 end
 function yanyuxingzhuiren(weight)
     ---烟雨行
-    if cdEX2("烟雨行") then
+    if cdEX2("烟雨行")  or jiuzhongxian(weight) or xiaozuikuang()  then
         return false
     end
     if dis()>18 and bangdagoutou(weight) and target and objIsZhengmian(target) then
         return true
     end
-    if dis()>12 and bangdagoutou(weight) and longyueyuyuan(weight) and target and objIsZhengmian(target) then
+    if dis()>10 and bangdagoutou(weight) and longyueyuyuan(weight) and target and objIsZhengmian(target) then
         return true
     end
     if state("锁足|僵直") then
@@ -212,20 +231,20 @@ function DPS(weight)
         skill("醉逍遥")
         skill("亢龙有悔")
     else
-        if equanlanlu() then
+        if equanlanlu(weight) then
             skillEX("恶犬拦路")
         end
         if bangdagoutou(weight) then
             skill("棒打狗头")
         end
-        if bogouchaotian()then
+        if bogouchaotian(weight)then
             skill("拨狗朝天")
         end
-        if tianxiawugou() then
+        if tianxiawugou(weight) then
             skill("天下无狗")
         end
 
-        if shuquanxiaori() then
+        if shuquanxiaori(weight) then
             skill("蜀犬吠日")
         end
         if longzhanyuye(weight) then
@@ -254,41 +273,49 @@ function DPS(weight)
     --end
 end
 function seurvival(weight)
-    if longyueyuyuanjiekong () then
+    if longyueyuyuanjiekong (weight) then
         skill("龙跃于渊")
     end
 
     if longxiaojiutian(weight) then
         Cast("龙啸九天",true,false)
     end
-    if chenglongxishui() then
+    if chenglongxishui(weight) then
         Cast("乘龙戏水",true,false)
     end
 
 end
 
 function dutiao(weight)
+    if (GetCastTime(g_player,5268)>0 and GetCastTime(g_player,5268)<2) or (GetCastTime(g_player,5270)>0 and GetCastTime(g_player,5270)<2 )  then
+        isdutiao = false
+        return
+    end
     if jiuzhongxian(weight) then
-        --if dis()<=5 then
-        --    skill(5508)--烟雨行
-        --end
-        MoveAction_StopAll()
-        --isdutiao = true
-        --if state("站立") then
-            Cast("酒中仙",true,false)
-            --isdutiao=false
-        --end
-        return 1
+        if dis()<=5 then
+            skill(5508)--烟雨行
+        end
+        isdutiao = true
+        SheildMoveKey(true)
+        if state("站立") then
+            Cast("酒中仙",true)
+        else
+            MoveAction_StopAll()
+        end
+
+        return true
     end
     if xiaozuikuang() then
-        MoveAction_StopAll()
-        --isdutiao = true
-        --if state("站立") then
+        isdutiao = true
+        SheildMoveKey(true)
+        if state("站立") then
             Cast("笑醉狂",true,false)
-            --isdutiao=false
-        --end
-        return 1
+        else
+            MoveAction_StopAll()
+        end
+        return true
     end
+    return false
 end
 
 function tab(weight)
@@ -355,13 +382,17 @@ end
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
     this_player = player
-    InteractNpc("遗失的货物")
     target,tclass = setAll(player)
     local weight = getWeight(true)
-    dutiao(weight)
-    if objIsota(this_player) then
+
+
+    if dutiao(weight) then
         return 1
     end
+    if isdutiao or objIsota(player) then
+        return 1
+    end
+    SheildMoveKey(false)
     if weight>3 and femgche(player, "敌对") then
         if target then
             if femgche(target, "敌对") then
@@ -396,7 +427,7 @@ function Main(player)
             TurnTo(target)
             isRun= true
             MoveForwardStart()
-            toBack()
+            --toBack()
         else
             if isRun then
                 MoveAction_StopAll()
@@ -424,9 +455,10 @@ function Main(player)
         Jump()
     end
     if target and IsParty(target) then
-        return
+        return 1
     end
     DPS(weight)
+    return 2
 end
 
 --end
@@ -453,6 +485,22 @@ function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)
     --		Cast(9007)  --后跳
     --	end
     --end
+    if  tIDnX == g_player.dwID then  --如果有人开始读条123技能，目标是自己
+        --print(string.find(duobi,dwSkillID))
+        --print("技能id:",dwSkillID)
+        --if dwSkillID==5268 or dwSkillID==5270 then
+        --    isdutiao=false
+        --end
+        --print(string.find(duobi,dwSkillID)~=nil)
+        --if string.find(duobi,dwSkillID)~=nil then
+        --print("躲避")
+        --    Cast("凌霄揽胜",true,true)
+        --    CastTo("流光囚影", CasterID, true)  --打断他读条
+        --Cast(9007)  --后跳
+        --    Cast(3973)
+        --end
+    end
+
 
     --print(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)  --输出释放信息
 end
