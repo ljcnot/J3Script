@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.txt")
+LoadLib("Macro\\封装函数.lua")
 local target
 local tclass
 local this_player
@@ -21,7 +21,7 @@ function jiekong()
 end
 function chirilun()
     ---赤日轮
-    if dis() > 4 or isManri() then
+    if dis() > 4 or isManri() or yinyuezhan() or lierizhan()  then
         return false
     end
     return true
@@ -37,7 +37,7 @@ function lierizhan()
 end
 function youyuelun()
     ---幽月轮
-    if dis() > 4 or isManyue() then
+    if dis() > 4 or isManyue() or yinyuezhan() or lierizhan()  then
         return false
     end
     return true
@@ -488,10 +488,20 @@ function DPS(weight)
             manri()
         end
     end
-    if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
-        yueling()
+    if lierizhan() then
+        skill("烈日斩")
+    end
+    if yinyuezhan() then
+        skill("银月斩")
+    end
+    if getSun()>getMoon()then
+        if chirilun() then
+            skill("赤日轮")
+        end
     else
-        riling()
+        if youyuelun() then
+            skill("幽月轮")
+        end
     end
     if cdEX("扶摇直上") == false then
         Cast("扶摇直上", true, true)
@@ -623,16 +633,20 @@ function Main(player)
     --
     --    --Cast(3973, true, true)
     --end
-    local npc,count = FindNpc(player, "地刺", 3, "敌对")
+    local npc,count = FindNpc(player, "地刺|小火圈", 4, "敌对")
     if count>0 then
         MoveForwardStart()
         isRun=true
     else
         if isRun then
             MoveForwardStop()
-            TurnTo(target)
+
             isRun=false
         end
+        TurnTo(target)
+    end
+    if tbuff("神佑") then
+        Use("冰泉水")
     end
     --print("weight:",weight)
     tab(weight)

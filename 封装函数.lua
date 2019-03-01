@@ -48,7 +48,7 @@ end
 function lastSkill(skill,time)
     local time123 = GetCastTime(this_player, skill)
     --5秒内放过指定技能，注意要判断大于等于0
-    return time123 >= 0 and time123 < time
+    return time123 > 0 and time123 < time
 end
 
 function mana()
@@ -624,6 +624,10 @@ function cdEX2(skill)
     ---充能技能判断
     return GetSkillCN(skill) == 0
 end
+function cdEX3(skill)
+    ---充能技能判断
+    return GetSkillOD(skill) == 0
+end
 
 function kongzhiTimeEX(time)
     --print(time)
@@ -658,6 +662,11 @@ function femgche(obj,relation)
     npc,count = FindNpc(obj, "63709", 6, relation)
     if count>0 then
         return true
+    end
+    for k, v in ipairs(GetAllPlayer()) do
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and objIsotaDesc(v,"风来吴山") and objDis(v)<=10  then
+            return true
+        end
     end
     return false
 end
@@ -815,6 +824,23 @@ function findRangeCount(range)
     for k, v in ipairs(players) do
         --v是玩家对象
         if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false  and GetDist(this_player, v) < range then
+            count= count+1
+        end
+    end
+    return count
+end
+function findRangeCountAndFace(range,face)
+    ---获取指定范围内的敌对目标数量
+    ---range  范围
+    if range == nil then
+        return nil
+    end
+    ---寻找适合的目标
+    local players = GetAllPlayer()
+    local count = 0
+    for k, v in ipairs(players) do
+        --v是玩家对象
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤") == false  and GetDist(this_player, v) < range and GetFace(v)>=0 and GetFace(v)<=face  then
             count= count+1
         end
     end

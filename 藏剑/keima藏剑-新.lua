@@ -1,4 +1,5 @@
-LoadLib("Macro\\封装函数.txt")
+LoadLib("Macro\\封装函数.lua")
+AddOption("自动跟随")
 local target
 local this_player
 local gcdsj = 0.1 --gcd时间
@@ -130,6 +131,9 @@ function xiaori(weight)
             --print("this_player.nCurrentRage>=90")
             return true
         end
+        if fenglaiwushan(weight) or xieliubaoshi() then
+            return true
+        end
 
         return false
     else
@@ -199,7 +203,7 @@ function heguigushan()
 end
 function fenglaiwushan(weight)
     ---风来吴山
-    if  this_player.nCurrentRage < 50 or cdEX("风来吴山") then
+    if cdEX("风来吴山") then
         return false
     end
     if HaveTalent("浮云") and dis()<=6 and life() <= 80 and kongzhi() then
@@ -208,7 +212,10 @@ function fenglaiwushan(weight)
     if dis() <=8 and ((death(target) and kongzhi() )or tota("千蝶吐瑞")) and life() <= 50 then
         return true
     end
-    if  dis() <=4 and target ~= nil and target.nRunSpeed < 22 and not cdEX("峰插云景")  and weight <= 5 then
+    if dis() <=8 and ((death(target) and kongzhi() )or tota("千蝶吐瑞")) and weight<=10 then
+        return true
+    end
+    if  dis() <=4 and target ~= nil and target.nRunSpeed < 22 and not cdEX("峰插云景")  and weight <= 10 then
         return true
     end
     if HaveTalent("层云") == false and dis() <=4 and life() <= 50 and not tstatep("免控") then
@@ -218,7 +225,7 @@ function fenglaiwushan(weight)
 end
 function fengchayunjing(weight)
     ---峰插云景
-    if dis() > 6 or this_player.nCurrentRage < 10 or cdEX("峰插云景") or tstatep("免推") then
+    if dis() > 6 or this_player.nCurrentRage < 10 or cdEX("峰插云景") or tstatep("免推") or tstate("击倒") then
         return false
     end
     if ttarget ~= nil and IsParty(ttarget) and (ttlife() < 60 or ttlife()< 40)then
@@ -259,8 +266,14 @@ function yingmingliu(weight)
     if this_player.nCurrentRage < 10 and weight<=8 and mount("山居剑意") then
         return true
     end
-    if weight <= 6 and mount("山居剑意") then
+    if this_player.nCurrentRage<50 and fenglaiwushan(weight) then
+        return true
+    end
+    if weight <= 7 and mount("山居剑意") then
         print("莺鸣", weight)
+        return true
+    end
+    if weight<=10 and mount("山居剑意") and (yunfeiyuhuang(weight) or songshewenxia(weight) ) then
         return true
     end
     if life() < 10 then
@@ -290,7 +303,7 @@ function quanningyue()
 end
 function yunxisong()
     ---云稀松
-    if rseeme(25) < 1 or statep("免外伤") or statep("减伤") or statep("单次免伤") then
+    if rseeme(25) < 1 or statep("免外伤") or buff("风吹荷") or statep("减伤") or statep("单次免伤") then
         return false
     end
     if life() <= 50 then
@@ -300,7 +313,7 @@ function yunxisong()
 end
 function fengchuihe()
     ---风吹荷
-    if HaveTalent("风吹荷") == false or cdEX("风吹荷") or dis() > 6 or tmount("补天诀|离经易道|相知|云裳心经") then
+    if HaveTalent("风吹荷") == false or cdEX("风吹荷") or dis() > 6 or tmount("补天诀|离经易道|相知|云裳心经")  or statep("免外伤") or buff("云栖松") or statep("减伤") or statep("单次免伤") then
         return false
     end
     if ttarget ~= nil and IsParty(ttarget) and ttlife() < 80 and ttstatep("封内") then
@@ -330,9 +343,9 @@ function jingtao()
     --print(tstate("击倒|倒地|眩晕|定身"))
     return false
 end
-function xieliubaoshi(weight)
+function xieliubaoshi()
     ---霞流宝石
-    if HaveTalent("霞流宝石") == false or cdEX("霞流宝石") or dis() > 5 or tstate("冲刺") or tstatep("免缴械") then
+    if HaveTalent("霞流宝石") == false or cdEX("霞流宝石") or dis() > 5 or tstate("冲刺") or tstatep("免缴械") or tstatep("免封内") then
         --print("霞流宝石")
         return false
     end
@@ -340,10 +353,13 @@ function xieliubaoshi(weight)
     if ttarget ~= nil and IsParty(ttarget) and ttlife() < 60 then
         return true
     end
-    if weight <= 10 and tmount("补天诀|离经易道|相知|云裳心经") and kongzhi() then
+    if tlife() <= 100 and tmount("补天诀|离经易道|相知|云裳心经") then
         return true
     end
     if tlife() <= 70 then
+        return true
+    end
+    if findRangeCount(5)>2 then
         return true
     end
     return false
@@ -464,7 +480,7 @@ function wenshui(weight)
 end
 function shanjujianyi(weight)
     ---山居剑意
-    if xieliubaoshi(weight) then
+    if xieliubaoshi() then
         --print("霞流宝石")
         skillEX2("霞流宝石")
         return
@@ -555,13 +571,13 @@ end
 
 
 function tab(weight)
-    if objState(target, "重伤")  then
+    if objState(target, "重伤") or tbuff("雷霆震怒") or tbuff("南风吐月") or tbuff("镇山河") then
         findTargetforRange(30)
         print("目标重伤")
 
     end
     if  target and  IsParty(target) then
-        if target ~=nil then
+        if target ~=nil and save_target then
             SetTarget(save_target)
         end
     else
@@ -603,7 +619,7 @@ function tab(weight)
             end
         end
     end
-    if HaveTalent("松舍问霞") and cdEX("松舍问霞") == false  then
+    if HaveTalent("松舍问霞") and mount("山居剑意") and cdEX("松舍问霞") == false  then
         ---如果探梅没CD 并且目标是敌对
         local target
         --遍历队伍成员
@@ -637,11 +653,11 @@ function tab(weight)
     --	print("探梅完了")
     --end
     -----上次切换目标大于5秒才会换目标
-    if weight>=50 and (GetTickCount() - lastSelectTime)>5000 then
-    	print("目标减伤过高")
-    	lastSelectTime = GetTickCount()
-    	findTarget(true)
-    end
+    --if weight>=50 and (GetTickCount() - lastSelectTime)>5000 then
+    --	print("目标减伤过高")
+    --	lastSelectTime = GetTickCount()
+    --	findTarget(true)
+    --end
     --
     --if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
     --    print("危险区域切换目标")
@@ -685,11 +701,11 @@ function Main(player)
     end
     local weight = getWeight(true)
     if weight>3 and femgche(player, "敌对") then
-            if target then
-                if femgche(target, "敌对") then
-                    BackTo(target)
-                end
+        if target then
+            if femgche(target, "敌对") then
+                BackTo(target)
             end
+        end
         MoveForwardStart()
         if state("眩晕|击倒|定身") then
             Cast("啸日", true, true)
@@ -709,23 +725,25 @@ function Main(player)
 
     --wuminghunsuo(weight)
     seurvival(weight)
-    if target and  femgche(target, "敌对") then
-        if isRun then
-            MoveAction_StopAll()
-            isRun=false
-        end
-        return
-    else
-        isRun= true
-        TurnTo(target)
-        MoveForwardStart()
-        ---风来吴山
-        local npc,count = FindNpc(this_player, "57739", 10, "自己")
-        if count>0 then
-            toRao()
+    if GetOption("自动跟随") then
+        if target and  femgche(target, "敌对") then
+            if isRun then
+                MoveAction_StopAll()
+                isRun=false
+            end
+            return
         else
-            StrafeLeftStop()
-            toBack()
+            isRun= true
+            TurnTo(target)
+            MoveForwardStart()
+            ---风来吴山
+            local npc,count = FindNpc(this_player, "57739", 10, "自己")
+            if count>0 then
+                toRao()
+            else
+                StrafeLeftStop()
+                toBack()
+            end
         end
     end
     if tbuff("盾立") or tbuff("无明魂锁") then
@@ -745,7 +763,7 @@ function Main(player)
 
 
 
-    if his() > 6 and buff("弹跳") then
+    if (his() > 6 or not IsVisible(target)) and buff("弹跳")  then
         Jump()
     end
     if GetHeight(player) > 6 and dis() <= 4 then
@@ -755,9 +773,9 @@ function Main(player)
 
 
 
-        --if GetHeight(player)>0 then
-        --	Jump()
-        --end
+    --if GetHeight(player)>0 then
+    --	Jump()
+    --end
 
     if ota("风来吴山") then
         --如果风车就不执行后面的
@@ -769,12 +787,12 @@ function Main(player)
     if target==nil then
         return
     end
-        DPS(weight)
+    DPS(weight)
     --else
     --    if save_target~=nil then
     --        SetTarget(save_target)
     --    end
-    end
+end
 
 
 --释放技能回调函数，任意对象释放技能时调用

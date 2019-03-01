@@ -14,10 +14,10 @@ local isRun = false
 local isDanger = false
 
 function jiekong()
-    if (GetSkillGCD("大道无术") + gcdsj) > dingshenTime() then
-        return false
+    if (GetSkillGCD("大道无术") + gcdsj) < dingshenTime() then
+        return true
     end
-    return true
+    return false
 end
 
 function shengtaiji()
@@ -57,7 +57,8 @@ function tunriyue()
     if diduinaima then
         local npc,count = FindNpc(diduinaima, "气场吞日月", 10, "自己")
         if count==0 then
-            CastTo("吞日月",diduinaima,true)
+            --CastTo("吞日月",diduinaima,true)
+            CastXYZ("吞日月",diduinaima.nX,diduinaima.nY,diduinaima.nZ,false)
         end
     end
     if boom()>3 then
@@ -339,21 +340,21 @@ end
 
 
 function tab(weight)
-    if objState(target, "重伤") or tbuff("雷霆震怒") then
+    if objState(target, "重伤") or tbuff("雷霆震怒") or tbuff("南风吐月") or tbuff("镇山河") then
         findTargetforRange(30)
         --print("目标重伤")
 
     end
-    if target == nil and save_target ~= nil then
-        SetTarget(save_target)
-    end
+    --if target == nil and save_target ~= nil then
+    --    SetTarget(save_target)
+    --end
 
     -----上次切换目标大于5秒才会换目标
-    if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
-        print("目标减伤过高")
-        lastSelectTime = GetTickCount()
-        findTarget(true)
-    end
+    --if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
+    --    print("目标减伤过高")
+    --    lastSelectTime = GetTickCount()
+    --    findTarget(true)
+    --end
 
     if tlife() > 20 and not tmount("离经易道|云裳心经|补天诀|相知") then
         findTargetforHp(20)
@@ -419,7 +420,7 @@ function Main(player)
         end
     end
 
-    if tbuff("盾立") or tbuff("无明魂锁") or tbuff("雷霆震怒") then
+    if tbuff("盾立") or tbuff("无明魂锁") or tbuff("雷霆震怒") or objState(target, "重伤")  then
         StopAction()
         return
     end

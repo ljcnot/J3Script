@@ -19,7 +19,8 @@ function jiekong()
 end
 function chirilun()
     ---赤日轮
-    if dis() > 4 or isManri() then
+    --print(getSun())
+    if dis() > 4 or isManri() or isManyue()  or yinyuezhan() or lierizhan() or quyeduanchou() or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     return true
@@ -27,7 +28,7 @@ end
 
 function lierizhan()
     ---烈日斩
-    if dis() > 4 or cdEX("烈日斩") or isManri() or getSun() >= 80 then
+    if dis() > 4 or cdEX("烈日斩") or isManri() or isManyue() or getSun() >= 80 or quyeduanchou() or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
 
@@ -35,7 +36,7 @@ function lierizhan()
 end
 function youyuelun()
     ---幽月轮
-    if dis() > 4 or isManyue() then
+    if dis() > 4 or isManyue() or isManri() or yinyuezhan() or lierizhan() or quyeduanchou() or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     return true
@@ -43,14 +44,14 @@ end
 
 function yinyuezhan()
     ---银月斩
-    if dis() > 12 or cdEX("银月斩") or isManyue() or ( getMoon() >= 80  and dis()<=4 )then
+    if dis() > 12 or cdEX("银月斩") or isManyue() or isManyue() or (getMoon() >= 80 and dis()<=4 ) or quyeduanchou() or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     return true
 end
 function shengsijie()
     ---生死劫
-    if dis() > 6 or GetCastCount(this_player, 3966, 10) >= 2 or (isManyue() == false and isManri() == false) or HaveTalent("幽隐尘迹") then
+    if dis() > 6 or GetCastCount(this_player, 3966, 10) >= 2 or (isManyue() == false and isManri() == false) or HaveTalent("幽隐尘迹") or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     if haveMiankong() then
@@ -67,7 +68,7 @@ function shengsijie()
 end
 function shengsijieJianliao()
     ---生死劫减疗
-    if dis() > 6 or (isManyue() == false and isManri() == false) then
+    if dis() > 6 or (isManyue() == false and isManri() == false) or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     if not tstatep("减疗") or tbufftime("月劫")<2 then
@@ -77,7 +78,7 @@ function shengsijieJianliao()
 end
 function jingshipomoji()
     ---净世破魔击
-    if dis() > 15 or (isManyue() == false and isManri() == false) then
+    if dis() > 15 or (isManyue() == false and isManri() == false) or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     if isManri() and (not shengsijie() or HaveTalent("善恶如梦")==false) then
@@ -90,7 +91,7 @@ function jingshipomoji()
 end
 function quyeduanchou()
     ---驱夜断愁
-    if dis() > 6 or cdEX("驱夜断愁") or isManyue() or isManri() then
+    if dis() > 6 or cdEX("驱夜断愁") or isManyue() or isManri()  or (buff("暗尘弥散") and buweianxing(10)) then
         return false
     end
     if buff("暗尘弥散") or buff("安尘") then
@@ -99,22 +100,28 @@ function quyeduanchou()
     return false
 end
 function buweianxing(weight)
+    if cdEX("怖畏暗刑") then
+        return false
+    end
+    local diduinaima = FindPlayer(6, "离经易道|云裳心经|补天诀|相知", "敌对")
+    if not tmount("补天诀|离经易道|相知|云裳心经") and diduinaima ~= nil and weight<=5 and objNotJiaoxie(diduinaima) and objNotJiaoxie(diduinaima) then
+        CastTo("怖畏暗刑", diduinaima,true)
+        return false
+    end
+    diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
+    if not tmount("补天诀|离经易道|相知|云裳心经") and not cdEX2("流光囚影") and weight<=5 and diduinaima and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) and (isManri() or isManyue()) then
+        jiaoxieNai = true
+        save_target = target
+        SetTarget(diduinaima)
+        CastTo("流光囚影",diduinaima,true)
+        print("控制奶妈")
+        return false
+    end
     ---怖畏暗刑
     if tclass==NPC  or  noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
         return false
     end
-    local diduinaima = FindPlayer(6, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if diduinaima ~= nil and weight<=5 and objNotJiaoxie(diduinaima) then
-        CastTo("怖畏暗刑", diduinaima,true)
-        return false
-    end
-        diduinaima = FindPlayer(25, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if not tmount("补天诀|离经易道|相知|云裳心经") and not cdEX2("流光囚影") and weight<=5 and diduinaima and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) then
-        jiaoxieNai = true
-        save_target = target
-        SetTarget(diduinaima)
-        return false
-    end
+
 
     if dis()>6 then
         return false
@@ -377,9 +384,9 @@ function riling()
     if lierizhan() then
         skill("烈日斩")
     end
-    if chirilun() then
-        skill("赤日轮")
-    end
+    --if chirilun() then
+    --    skill("赤日轮")
+    --end
 end
 
 function yueling()
@@ -387,9 +394,9 @@ function yueling()
     if yinyuezhan() then
         skill("银月斩")
     end
-    if youyuelun() then
-        skill("幽月轮")
-    end
+    --if youyuelun() then
+    --    skill("幽月轮")
+    --end
 end
 function manri()
     ---满日输出
@@ -422,7 +429,8 @@ function yinshen()
 end
 function kongnai(weight)
     ---控制奶妈
-    if cdEX("怖畏暗刑") and (isManyue() or isManri()) then
+    if not tmount("离经易道|云裳心经|补天诀|相知") or  (cdEX("怖畏暗刑") and (isManyue() or isManri())) then
+        print("控制奶妈结束")
         SetTarget(save_target)
         save_target = nil
         jiaoxieNai=false
@@ -438,23 +446,20 @@ function kongnai(weight)
     if hanyueyao() then
         skill("寒月耀")
     end
-    if isManyue() then
-        manyue()
-    else
-        if isManri() then
-            manri()
+    if lierizhan() then
+        skill("烈日斩")
+    end
+    if yinyuezhan() then
+        skill("银月斩")
+    end
+    if getSun()-getMoon()>=35 or getSun()>=80  then
+        if chirilun() then
+            skill("赤日轮")
         end
-    end
-    if quyeduanchou() then
-        skillEX("驱夜断愁")
-    end
-    if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
-        yueling()
     else
-        riling()
-    end
-    if cdEX("扶摇直上") == false then
-        Cast("扶摇直上", true, true)
+        if youyuelun() then
+            skill("幽月轮")
+        end
     end
 end
 function DPS(weight)
@@ -505,11 +510,29 @@ function DPS(weight)
     if quyeduanchou() then
         skillEX("驱夜断愁")
     end
-    if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
-        yueling()
-    else
-        riling()
+    --if (cdEX("烈日斩") and getSun() < 80) or dis()>4 then
+    --    yueling()
+    --else
+    --    riling()
+    --end
+
+    if lierizhan() then
+        skill("烈日斩")
     end
+    if yinyuezhan() then
+        skill("银月斩")
+    end
+    if getSun()-getMoon()>=35 or getSun()>=80  then
+        if chirilun() then
+            skill("赤日轮")
+        end
+    else
+        if youyuelun() then
+            skill("幽月轮")
+        end
+    end
+
+
     if cdEX("扶摇直上") == false then
         Cast("扶摇直上", true, true)
     end
@@ -532,10 +555,9 @@ end
 
 
 function tab(weight)
-    if objState(target, "重伤") or tbuff("雷霆震怒") then
+    if objState(target, "重伤") or tbuff("雷霆震怒") or tbuff("南风吐月") or tbuff("镇山河") then
         findTargetforRange(30)
         --print("目标重伤")
-
     end
     --if jiaoxieNai and not tmount("补天诀|离经易道|相知|云裳心经") then
     --    save_target = target.dwID
@@ -584,11 +606,11 @@ function tab(weight)
     --	print("探梅完了")
     --end
     -----上次切换目标大于5秒才会换目标
-    if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
-        print("目标减伤过高")
-        lastSelectTime = GetTickCount()
-        findTarget(true)
-    end
+    --if weight >= 50 and (GetTickCount() - lastSelectTime) > 5000 then
+    --    print("目标减伤过高")
+    --    lastSelectTime = GetTickCount()
+    --    findTarget(true)
+    --end
     --
     --if IsDangerArea(target, "敌对") and (GetTickCount() - lastSelectTime) > 5000 then
     --    print("危险区域切换目标")
@@ -602,12 +624,17 @@ end
 
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
+    target,tclass = setAll(player)
     this_player = player
     if player.bFightState == false then
         Cast("暗尘弥散", true, true)
     end
     InteractNpc("遗失的货物")
-    target,tclass = setAll(player)
+    InteractNpc("叹息风碑")
+    if life()<=50 then
+        Use("金疮药")
+    end
+
     local weight = getWeight(false)
 
     if weight>3 and femgche(player, "敌对") then

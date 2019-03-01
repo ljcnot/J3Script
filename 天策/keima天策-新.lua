@@ -56,7 +56,7 @@ function jirufeng(weight)
     if cdEX("疾如风") then
         return false
     end
-    if state("眩晕|击倒|僵直|定身") and (life()<80 or weight<=8)then
+    if state("眩晕|击倒|僵直|定身") and (life()<80 or weight<=8) then
         return true
     end
     return false
