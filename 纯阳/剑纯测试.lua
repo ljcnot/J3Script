@@ -4,13 +4,7 @@ AddOption("自动跟随")
 local laststate
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
-
-    local state = GetState(player)
-    if laststate~=state then
-        print(state)
-        laststate=state
-    end
-print(GetOption("自动跟随"))
+    objStatep(player,"沉默")
 end
 
 

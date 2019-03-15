@@ -3,9 +3,9 @@ AddOption("自动跟随")
 local save
 local laststate
 function shiziqiang(weight)
-    if  cdEX3("封渊震煞") or cdEX("坚壁清野") or  cdEX("楚河汉界") then
-        return false
-    end
+    --if  cdEX3("封渊震煞") or cdEX("坚壁清野") or  cdEX("楚河汉界") then
+    --    return false
+    --end
     --if weight <=10 then
     --    return true
     --end
@@ -23,12 +23,8 @@ function Main(player)
     --else
     --    SetTarget(save)
     --end
-    print(cdEX("坚壁清野"))
-    if shiziqiang() then
-        skill("楚河汉界")
-        skill("坚壁清野")
-        CastAngle("封渊震煞",-60)
-    end
+    print(ObjCastTime(player,16608,2))
+
 
     --end
     --local func = function(a)

@@ -88,6 +88,7 @@ function skillEX2(skillid)
     ---打断当前读条
     Cast(skillid,true,true)
 end
+
 function dis()
     return GetDist(target)
 end

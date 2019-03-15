@@ -20,6 +20,7 @@ function jiekong()
     return false
 end
 
+
 function shengtaiji()
     ---生太极
     if cdEX("生太极") then
@@ -30,11 +31,21 @@ function shengtaiji()
     end
     if target then
         ---生太极,吞日月
-        local npc,count = FindNpc(target, "气场生太极", 18, "自己")
+        local npc,count = FindNpc(target, "气场生太极", 13, "自己")
         if count==0 then
-            skillEX("生太极")
+            CastXYZ("生太极",target.nX,target.nY,target.nZ,false)
         end
 
+    end
+    return false
+end
+function huasanqing()
+    ---生太极
+    if not HaveTalent("化三清") or cdEX("化三清") then
+        return false
+    end
+    if  mana()<=30 then
+        Cast("化三清",true,false)
     end
     return false
 end
@@ -141,6 +152,10 @@ function renjianheyi()
         return false
     end
     local npc,count
+    npc,count = FindNpc(this_player, "气场镇山河", 13, "敌人")
+    if count>0  then
+        return true
+    end
     if target then
      npc,count = FindNpc(target, "气场生太极|气场破苍穹|气场吞日月|气场碎星辰|气场镇山河|气场化三清", 6, "自己|队友|敌人")
     if npc and  objDis(npc)<=13 then
@@ -156,10 +171,7 @@ function renjianheyi()
         end
     end
     end
-    npc,count = FindNpc(this_player, "气场镇山河", 13, "敌人")
-    if count>0  then
-        return true
-    end
+
 
     return false
 end
@@ -315,12 +327,15 @@ function DPS(weight)
     end
 
     if cdEX("扶摇直上") == false then
-        Cast("扶摇直上", true, true)
+        Cast("扶摇直上", true, false)
     end
 end
 function seurvival(weight)
     ---生存向技能
     if shengtaiji() then
+
+    end
+    if huasanqing() then
 
     end
     if zhuanqiankun() then
@@ -390,7 +405,6 @@ function Main(player)
         --Cast(3973, true, true)
     end
 
-    --print("weight:",weight)
     if GetOption("自动切换") then
         tab(weight)
     end
@@ -424,10 +438,7 @@ function Main(player)
         StopAction()
         return
     end
-    --if ota("云飞玉皇") then
-    --    MoveAction_StopAll()
-    --    return
-    --end
+
     --跟随当前目标
 
 

@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.lua")
+LoadLib("Macro\\封装函数.txt")
 local target
 local tclass
 local this_player
@@ -99,7 +99,7 @@ function quyeduanchou()
     end
     return false
 end
-function buweianxing(weight)
+function autoBuwei(weight)
     if cdEX("怖畏暗刑") then
         return false
     end
@@ -109,7 +109,7 @@ function buweianxing(weight)
         return false
     end
     diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if not tmount("补天诀|离经易道|相知|云裳心经") and not cdEX2("流光囚影") and weight<=5 and diduinaima and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) and (isManri() or isManyue()) then
+    if not tmount("补天诀|离经易道|相知|云裳心经")  and diduinaima and not femgche(diduinaima,"敌对")  and weight<=5 and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) and (isManri() or isManyue()) then
         jiaoxieNai = true
         save_target = target
         SetTarget(diduinaima)
@@ -117,35 +117,29 @@ function buweianxing(weight)
         print("控制奶妈")
         return false
     end
+end
+function buweianxing(weight)
     ---怖畏暗刑
     if tclass==NPC  or  noSkillTime(0.2) or cdEX("怖畏暗刑") or tstatep("免缴械") or tstatep("免封内") then
         return false
     end
-
-
     if dis()>6 then
         return false
     end
     if tbuff("乱洒青荷") or tbuff("心无旁骛") then
         return true
     end
-
     --
-    --if tlife() <= 50 then
-    --    --if cdEX("怖畏暗刑") and cdEX("生灭予夺") == false then
-    --    --    skillEX2("暗尘弥散")
-    --    --    skill("流光囚影")
-    --    --    skill("驱夜断愁")
-    --    --    skillEX2("生灭予夺")
-    --    --    --print("生灭")
-    --    --    return true
-    --    --end
-    --    return true
-    --end
-    if not jiaoxieNai and tlife() <= 100 and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
+    if tmount("惊羽诀|天罗诡道") and weight<=3 then
         return true
     end
-    if jiaoxieNai and tlife() <= 100 and (isManyue() or isManri())  and (not IsInArena() or objOnHorse(target) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
+    if tmount("傲血战意") and weight<=4 then
+        return true
+    end
+    if not jiaoxieNai and tlife() <= 100 and (not IsInArena() or (objOnHorse(target) and not  tstatep("免控")) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
+        return true
+    end
+    if jiaoxieNai and tlife() <= 100 and (isManyue() or isManri())  and (not IsInArena() or  (objOnHorse(target) and not  tstatep("免控")) or tmount("补天诀|离经易道|相知|云裳心经|凌海决")) then
         return true
     end
     return false
@@ -189,7 +183,7 @@ function fumingzhongsheng(weight)
 end
 function mingyueduxin(weight)
     ---冥月渡心
-    if not HaveTalent("冥月渡心") or buff("扬旌沙场") or isguangmingxiang() or cdEX("冥月渡心") or getMoon() < 60 or dis() > 12 or buff("光明相") then
+    if not HaveTalent("冥月渡心") or buff("扬旌沙场") or cdEX("冥月渡心") or getMoon() < 60 or dis() > 12 then
         return false
     end
     if weight <= 10 then
@@ -199,16 +193,16 @@ function mingyueduxin(weight)
 end
 function hanyueyao()
     ---寒月耀
-    if not HaveTalent("寒月耀") or cdEX("寒月耀") or dis() > 20 or tstatep("免封内") or tstatep("免打断") then
+    if not HaveTalent("寒月耀") or cdEX("寒月耀") or dis() > 20 or  noSkillTime(0.2) or tstatep("免封内") or tstatep("免打断") then
         return false
     end
-    if tIsota() then
+    if tIsota() and tmount("离经易道|云裳心经|补天诀|相知|莫问") then
         return true
     end
     if not tmount("离经易道|云裳心经|补天诀|相知") then
         local diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
         if diduinaima ~= nil and objIsota(diduinaima) then
-            CastTo("寒月耀", diduinaima)
+            CastTo("寒月耀", diduinaima,true)
         end
     end
     return false
@@ -372,7 +366,7 @@ function wuminghunsuo(weight)
         end
     end
     if tmount("离经易道|云裳心经|补天诀|相知") and weight <= 10 then
-        local nosee = findNoSeediren()
+        local nosee = findNoSeediren(8)
         if nosee then
             CastTo("无明魂锁", nosee, true)
         end
@@ -413,7 +407,7 @@ function manri()
 end
 function manyue()
 
-    if shengsijieJianliao() then
+    if not HaveTalent("驱夷逐法") and  shengsijieJianliao() then
         skillEX("生死劫")
     end
     if jingshipomoji() then
@@ -636,8 +630,10 @@ function Main(player)
     end
 
     local weight = getWeight(false)
+    autoBuwei(weight)
+    tab(weight)
 
-    if weight>3 and femgche(player, "敌对") then
+    if weight>2 and femgche(player, "敌对") then
         if target then
             if femgche(target, "敌对") then
                 BackTo(target)
@@ -645,19 +641,24 @@ function Main(player)
                 skill("流光囚影")
             end
         end
-        MoveForwardStart()
         if state("眩晕|击倒|定身") then
             Cast("暗尘弥散", true, true)
         end
+        if cdEX("扶摇直上") and cdEX("蹑云逐月") then
+            ---贪魔体
+            Cast(3973, true, true)
+        end
         Cast("扶摇直上", true, true)
-        Jump()
+        if buff("弹跳") then
+            Jump()
+        end
         Cast("蹑云逐月", true, true)
 
         --Cast(3973, true, true)
     end
 
     --print("weight:",weight)
-    tab(weight)
+
     seurvival(weight)
     if wuminghunsuo(weight) then
         skillEX("无明魂锁")
@@ -712,7 +713,7 @@ function Main(player)
     if target and IsParty(target) then
         return
     end
-    if jiaoxieNai then
+    if jiaoxieNai  then
         kongnai(weight)
     else
         DPS(weight)

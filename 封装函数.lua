@@ -50,7 +50,13 @@ function lastSkill(skill,time)
     --5秒内放过指定技能，注意要判断大于等于0
     return time123 > 0 and time123 < time
 end
-
+function objStatep(obj,desc)
+    if obj ==nil then
+        return false
+    end
+   local objBuff = GetBuff(obj)
+    return GetTypeTime(objBuff, desc)>0
+end
 function mana()
     if this_player == nil then
         return 0
@@ -143,6 +149,10 @@ end
 function skillEX2(skillid)
     ---打断当前读条
     Cast(skillid, true, true)
+end
+function skillEX3(skillid)
+    ---不打断当前读条
+    Cast(skillid,true,false)
 end
 function dis()
     if not target then
@@ -301,6 +311,12 @@ function CastTime(skillid, time)
     end
     return GetCastTime(target, skillid) > 0 and GetCastTime(target, skillid) <= time
 end
+function ObjCastTime(obj,skillid, time)
+    if obj == nil then
+        return false
+    end
+    return GetCastTime(obj, skillid) > 0 and GetCastTime(obj, skillid) <= time
+end
 function objNotWudi(obj)
     local wudi = { 203, 9695, 10212, 9934, 377 }
     for k, v in ipairs(wudi) do
@@ -312,7 +328,7 @@ function objNotWudi(obj)
     return true
 end
 function objNotJiaoxie(obj)
-    local wudi = { 4053,12321 }
+    local wudi = { 4053,12321,9752 }
     for k, v in ipairs(wudi) do
         if obj.IsHaveBuff(v, 0) then
             return false
@@ -703,7 +719,7 @@ function seeObjForEnemy(obj)
     end
     return count
 end
-function findNoSeediren()
+function findNoSeediren(range)
     ---寻找没人看的目标
     local seeObjList = {}
     --遍历队伍成员
@@ -714,7 +730,7 @@ function findNoSeediren()
         end
     end
     for k, v in ipairs(GetAllPlayer()) do
-        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and  GetDist(this_player, v) < 8 and IsVisible(this_player, v) and death(v)  then
+        if IsPlayer(v.dwID) and IsEnemy(v) and objState(v, "重伤")==false and  GetDist(this_player, v) < range and IsVisible(this_player, v) and death(v)  then
             local nosee = true
             for see_k, see_v in ipairs(seeObjList) do
                 if v ==see_v then
@@ -977,6 +993,59 @@ function findTargetforHp(hp)
         print("选择40%血的目标")
         SetTarget(lastTar)
     end
+end
+function findPartforHp(hp)
+    ---获取指定血量的敌对目标
+
+    ---寻找适合的目标
+    local players = GetAllMember()
+    local lastTar = nil
+    local lastWeight = 100
+    for k, v in ipairs(players) do
+        --v是玩家对象
+        local weight = 10
+        if IsPlayer(v.dwID) and IsParty(v)  and objState(v, "重伤")==false and GetDist(this_player, v) < 20 and IsVisible(this_player, v) and objLife(v) < hp and objNotWudi(v) then
+            --如果不是我
+            if objLife(v) == 0 or objState(v, "重伤") then
+                weight = weight + 100
+            end
+            if objLife(v) > 80 and objLife(v) <= 90 then
+                weight = weight - 1
+            end
+            if objLife(v) > 70 and objLife(v) <= 80 then
+                weight = weight - 2
+            end
+            if objLife(v) > 60 and objLife(v) <= 70 then
+                weight = weight - 3
+            end
+            if objLife(v) > 50 and objLife(v) <= 60 then
+                weight = weight - 4
+            end
+            if objLife(v) > 40 and objLife(v) <= 50 then
+                weight = weight - 5
+            end
+            if objLife(v) > 30 and objLife(v) <= 40 then
+                weight = weight - 6
+            end
+            if objLife(v) > 20 and objLife(v) <= 30 then
+                weight = weight - 7
+            end
+            if objLife(v) > 10 and objLife(v) <= 20 then
+                weight = weight - 8
+            end
+            if objLife(v) > 0 and objLife(v) <= 10 then
+                weight = weight - 9
+            end
+            if objState(v, "眩晕|击倒|僵直|定身") then
+                weight = weight - 3
+            end
+            if lastWeight > weight then
+                lastWeight = weight
+                lastTar = v
+            end
+        end
+    end
+    return lastTar
 end
 
 function findTargetforRange(range)

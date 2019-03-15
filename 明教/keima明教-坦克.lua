@@ -74,7 +74,7 @@ function shengsijieJianliao()
 end
 function jingshipomoji()
     ---净世破魔击
-    if dis() > 15 or (isManyue() == false and isManri() == false) then
+    if dis() > 15 or (isManyue() == false and isManri() == false) or femgche(target, "敌对") then
         return false
     end
     if isManri() and (not shengsijie() or HaveTalent("善恶如梦")==false) then
@@ -354,7 +354,7 @@ function wuminghunsuo(weight)
         end
     end
     if tmount("离经易道|云裳心经|补天诀|相知") and weight <= 10 then
-        local nosee = findNoSeediren()
+        local nosee = findNoSeediren(8)
         if nosee then
             CastTo("无明魂锁", nosee, true)
         end

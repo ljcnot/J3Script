@@ -1,4 +1,4 @@
-LoadLib("Macro\\·â×°º¯Êı.lua")
+LoadLib("Macro\\·â×°º¯Êı.txt")
 AddOption("×Ô¶¯¸úËæ")
 local target
 local this_player
@@ -30,7 +30,7 @@ end
 
 function hupao()
     ---ÃÎÈª»¢ÅÜ
-    if statep("Ãâ¿Ø") or cdEX("ÃÎÈª»¢ÅÜ") then
+    if dis()>17 or  statep("Ãâ¿Ø") or cdEX("ÃÎÈª»¢ÅÜ") then
         return false
     end
     if rseeme(25) > 0 then
@@ -693,6 +693,7 @@ function seurvival(weight)
 end
 --Mainº¯Êı£¬1¸ö²ÎÊıÊÇ×Ô¼ºµÄÍæ¼Ò¶ÔÏó£¬Ã¿Ãëµ÷ÓÃ16´Î
 function Main(player)
+    skill("ËÉÉáÎÊÏ¼¡¤Ô¾")
     this_player = player
     InteractNpc("ÒÅÊ§µÄ»õÎï")
     target = setAll(player)
@@ -763,7 +764,7 @@ function Main(player)
 
 
 
-    if (his() > 6 or not IsVisible(target)) and buff("µ¯Ìø")  then
+    if (his() > 6 or (target and not IsVisible(target))) and buff("µ¯Ìø")  then
         Jump()
     end
     if GetHeight(player) > 6 and dis() <= 4 then
