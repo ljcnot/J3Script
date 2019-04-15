@@ -1,4 +1,4 @@
-LoadLib("Macro\\封装函数.lua")
+LoadLib("Macro\\封装函数.txt")
 local target
 local tclass
 local this_player

@@ -37,8 +37,6 @@ function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)
 
 end
 
-
-
 --开始读条回调函数，任意对象开始读条时调用
 function OnPrepare(CasterID, dwSkillID, dwLevel, nLeftFrame, tClass, tIDnX, nY, nZ)
 

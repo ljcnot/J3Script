@@ -986,8 +986,7 @@ end
 function tab(weight)
 	if target == nil or objState(target,"重伤") then
 		findTargetforRange(30)
-		print("目标重伤")
-
+		--print("目标重伤")
 	end
 
 	--if life() <=40 then

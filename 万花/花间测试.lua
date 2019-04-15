@@ -3,32 +3,20 @@ local laststate
 local this_player
 
 function buff(list)
-   local mbuff = GetBuff(this_player)
-    return GetBuffTime(mbuff, list) > 0
-
+    local findfunc = function(member)        --member是团队中的玩家对象
+        print(member.szName)
+    end
+    local teamcount = FindTeamMember(findfunc)
 
 end
 
 function Main(player)
-    this_player = player
-    local state = GetState(player)
-    if laststate~=state then
-        laststate = state
-        print(state)
+    local findfunc = function(member)        --member是团队中的玩家对象
+        print(member.szName)
     end
-   local ttarget, ttclass = GetTarget(player)
-    print(GetDist(player, ttarget))
-    --print("执行前",GetTickCount())
-    --GetOption("风来吴山")
-    --GetOption("风来吴山2")
-    --GetOption("风来吴山3")
-    --print("执行后",GetTickCount())
-    --if GetSkillSCD("泉凝月")>0 then
-    --    print("泉凝月CD",GetTickCount())
-    --end
-    --if buff("泉凝月") then
-    --    print("泉凝月buff",GetTickCount())
-    --end
+    local teamcount = FindTeamMember(findfunc)
+    print(teamcount)
+
 end
 
 

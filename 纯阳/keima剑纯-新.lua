@@ -287,7 +287,7 @@ function shuyunzhuyue()
 end
 function DPS(weight)
     if ziqidonglai(weight) then
-        skillEX2("紫气东来")
+        skill("紫气东来")
     end
     if dadaowushu() then
         skillEX("大道无术")
@@ -381,9 +381,9 @@ function Main(player)
     this_player = player
     target,tclass = setAll(player)
     local weight = getWeight(false)
-    if jianfeijingtian(weight) then
-        skillEX("剑飞惊天")
-    end
+    --if jianfeijingtian(weight) then
+    --    skillEX("剑飞惊天")
+    --end
     if weight>3 and femgche(player, "敌对") then
         if target then
             if femgche(target, "敌对") then
@@ -403,6 +403,11 @@ function Main(player)
         Cast("蹑云逐月", true, true)
 
         --Cast(3973, true, true)
+    end
+
+
+    if target and weight<=5 then
+        RemoteCall("集火", target.dwID)	--jihuo相当于指令，是必须的，后面的参数没有或者传多少个都行
     end
 
     if GetOption("自动切换") then
@@ -456,7 +461,17 @@ function Main(player)
     DPS(weight)
 end
 
---end
+--这个回调函数会收到RemoteCall发送的信息
+--SenderID 发送者的ID
+--SenderName 发送者的名字
+--tInfo 数据表，里面是调用RemoteCall传的参数
+function OnRemoteCall(SenderID, SenderName, tInfo)
+    if SenderID ~= g_player.dwID then	--如果发送者不是自己
+        if tInfo[1] == "集火" then	--1对应RemoteCall的第一个参数
+            SetTarget(tInfo[2])	--2对应RemoteCall的第二个参数
+        end
+    end
+end
 
 
 --释放技能回调函数，任意对象释放技能时调用

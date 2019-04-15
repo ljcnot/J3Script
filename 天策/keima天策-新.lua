@@ -285,6 +285,10 @@ function tab(player)
         --print("目标重伤")
 
     end
+
+
+
+
 end
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
@@ -302,9 +306,25 @@ function Main(player)
     --end
 
     local weight = getWeight(true)
+
+    if target and weight<=5 then
+        RemoteCall("集火", target.dwID)	--jihuo相当于指令，是必须的，后面的参数没有或者传多少个都行
+    end
     seurvival(weight)
     DPS(weight,target)
 
+end
+--这个回调函数会收到RemoteCall发送的信息
+--SenderID 发送者的ID
+--SenderName 发送者的名字
+--tInfo 数据表，里面是调用RemoteCall传的参数
+function OnRemoteCall(SenderID, SenderName, tInfo)
+    if SenderID ~= g_player.dwID then	--如果发送者不是自己
+        if tInfo[1] == "集火" then	--1对应RemoteCall的第一个参数
+
+            SetTarget(tInfo[2])	--2对应RemoteCall的第二个参数
+        end
+    end
 end
 
 

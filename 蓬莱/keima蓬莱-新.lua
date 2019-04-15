@@ -88,7 +88,10 @@ function skillEX2(skillid)
     ---打断当前读条
     Cast(skillid,true,true)
 end
-
+function skillEX3(skillid)
+    ---对自己施法不打断读条
+    Cast(skillid,true,false)
+end
 function dis()
     return GetDist(target)
 end

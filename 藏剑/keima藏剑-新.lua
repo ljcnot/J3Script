@@ -253,7 +253,7 @@ function fengchayunjing(weight)
     --if weight >= 6 and weight <= 8 and buff("凤鸣")  and (tstatep("免控") or (tmount("山居剑意") and (cdEX("惊涛") or HaveTalent("惊涛")) and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")) ) then
     --    return true
     --end
-    if weight <= 2 and (tstatep("免控") or ((tmount("山居剑意") and (cdEX("惊涛") or HaveTalent("惊涛")) and cdEX("醉月")) or (tmount("问水诀") and cdEX("醉月")))) then
+    if weight <= 3 or tstatep("免控") then
         return true
     end
     return false
@@ -576,6 +576,14 @@ function tab(weight)
         print("目标重伤")
 
     end
+
+
+    if target and weight<=5 then
+        RemoteCall("集火", target.dwID)	--jihuo相当于指令，是必须的，后面的参数没有或者传多少个都行
+    end
+
+
+
     if  target and  IsParty(target) then
         if target ~=nil and save_target then
             SetTarget(save_target)
@@ -688,8 +696,6 @@ function seurvival(weight)
     if fengchuihe() then
         skill("风吹荷")
     end
-
-
 end
 --Main函数，1个参数是自己的玩家对象，每秒调用16次
 function Main(player)
@@ -793,6 +799,25 @@ function Main(player)
     --    if save_target~=nil then
     --        SetTarget(save_target)
     --    end
+end
+
+
+
+
+
+--这个回调函数会收到RemoteCall发送的信息
+--SenderID 发送者的ID
+--SenderName 发送者的名字
+--tInfo 数据表，里面是调用RemoteCall传的参数
+function OnRemoteCall(SenderID, SenderName, tInfo)
+    if SenderID ~= g_player.dwID then	--如果发送者不是自己
+        if tInfo[1] == "集火" then	--1对应RemoteCall的第一个参数
+            if tmount("离经易道|云裳心经|补天诀|相知") and xieliubaoshi() then
+                skillEX2("霞流宝石")
+            end
+            SetTarget(tInfo[2])	--2对应RemoteCall的第二个参数
+        end
+    end
 end
 
 

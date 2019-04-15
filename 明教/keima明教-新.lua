@@ -104,16 +104,16 @@ function autoBuwei(weight)
         return false
     end
     local diduinaima = FindPlayer(6, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if not tmount("补天诀|离经易道|相知|云裳心经") and diduinaima ~= nil and weight<=5 and objNotJiaoxie(diduinaima) and objNotJiaoxie(diduinaima) then
+    if not tmount("补天诀|离经易道|相知|云裳心经") and diduinaima ~= nil and IsVisible(diduinaima) and tlife()<=50 then
         CastTo("怖畏暗刑", diduinaima,true)
         return false
     end
     diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
-    if not tmount("补天诀|离经易道|相知|云裳心经")  and diduinaima and not femgche(diduinaima,"敌对")  and weight<=5 and IsVisible(diduinaima) and objNotJiaoxie(diduinaima) and (isManri() or isManyue()) then
+    if not tmount("补天诀|离经易道|相知|云裳心经")  and diduinaima and not femgche(diduinaima,"敌对")  and tlife()<=50 and IsVisible(diduinaima) and (isManri() or isManyue()) then
         jiaoxieNai = true
         save_target = target
         SetTarget(diduinaima)
-        CastTo("流光囚影",diduinaima,true)
+        --CastTo("流光囚影",diduinaima,true)
         print("控制奶妈")
         return false
     end
@@ -193,20 +193,26 @@ function mingyueduxin(weight)
 end
 function hanyueyao()
     ---寒月耀
-    if not HaveTalent("寒月耀") or cdEX("寒月耀") or dis() > 20 or  noSkillTime(0.2) or tstatep("免封内") or tstatep("免打断") then
+    if not HaveTalent("寒月耀") or cdEX("寒月耀")   then
+        return false
+    end
+
+    if not tmount("离经易道|云裳心经|补天诀|相知|莫问") then
+        local diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知|莫问", "敌对")
+        if diduinaima ~= nil and objIsota(diduinaima) and not objIsotaDesc(diduinaima, "千蝶吐瑞") then
+            CastTo("寒月耀", diduinaima, true)
+        end
+    end
+    if dis() > 20 or noSkillTime(0.2) or objIsotaDesc(target, "千蝶吐瑞") or tstatep("免封内") or tstatep("免打断") then
         return false
     end
     if tIsota() and tmount("离经易道|云裳心经|补天诀|相知|莫问") then
         return true
     end
-    if not tmount("离经易道|云裳心经|补天诀|相知") then
-        local diduinaima = FindPlayer(20, "离经易道|云裳心经|补天诀|相知", "敌对")
-        if diduinaima ~= nil and objIsota(diduinaima) then
-            CastTo("寒月耀", diduinaima,true)
-        end
-    end
+
     return false
 end
+
 function liuguangqiuying(weight)
     ---流光囚影
     if cdEX2("流光囚影") or dis() > 20 or jileyin(weight) or tstate("冲刺") or GetSkillGCD("生死劫") > 0 or (GetCastTime(this_player, 18629) > 0 and GetCastTime(this_player, 18629) < 1) then
@@ -214,6 +220,9 @@ function liuguangqiuying(weight)
         return false
     end
     if dis() > 4 and (statep("锁足") or state("僵直")) then
+        return true
+    end
+    if dis() >6 and jiaoxieNai then
         return true
     end
     if dis() > 4 and dis() <= 15 and jingshipomoji() then
@@ -359,13 +368,13 @@ function wuminghunsuo(weight)
         CastTo("无明魂锁", target, true)
     end
 
-    if not tmount("离经易道|云裳心经|补天诀|相知") and weight <= 10 then
+    if not tmount("离经易道|云裳心经|补天诀|相知") then
         local diduinaima = FindPlayer(8, "离经易道|云裳心经|补天诀|相知", "敌对")
         if diduinaima then
             CastTo("无明魂锁", diduinaima, true)
         end
     end
-    if tmount("离经易道|云裳心经|补天诀|相知") and weight <= 10 then
+    if tmount("离经易道|云裳心经|补天诀|相知") then
         local nosee = findNoSeediren(8)
         if nosee then
             CastTo("无明魂锁", nosee, true)
@@ -436,10 +445,6 @@ function kongnai(weight)
     if target and  not femgche(target, "敌对") and liuguangqiuying(weight) then
         skill("流光囚影")
     end
-
-    if hanyueyao() then
-        skill("寒月耀")
-    end
     if lierizhan() then
         skill("烈日斩")
     end
@@ -483,10 +488,6 @@ function DPS(weight)
     if guangmingxiang(weight) then
         Cast("光明相", true, true)
     end
-    if hanyueyao() then
-        skill("寒月耀")
-    end
-
     if fumingzhongsheng(weight) then
         skill("伏明众生")
     end
@@ -553,25 +554,10 @@ function tab(weight)
         findTargetforRange(30)
         --print("目标重伤")
     end
-    --if jiaoxieNai and not tmount("补天诀|离经易道|相知|云裳心经") then
-    --    save_target = target.dwID
-    --
-    --end
-    --if target == nil and save_target ~= nil then
-    --    SetTarget(save_target)
-    --end
-    --if life() <=40 then
-    --	local naima = FindPlayer(40, "离经易道|云裳心经|补天诀|相知", "队友")
-    --	if naima and GetDist(naima)>6 then
-    --		SetTarget(naima)
-    --		help = true
-    --	else
-    --		if help then
-    --			findTargetforRange(8)
-    --			help = false
-    --		end
-    --	end
-    --end
+    if target and weight<=5 then
+        RemoteCall("集火", target.dwID)	--jihuo相当于指令，是必须的，后面的参数没有或者传多少个都行
+    end
+
     if HaveTalent("寒月耀") and cdEX("寒月耀") == false then
         ---如果探梅没CD 并且目标是敌对
         local target
@@ -631,6 +617,9 @@ function Main(player)
 
     local weight = getWeight(false)
     autoBuwei(weight)
+    if hanyueyao() then
+        skill("寒月耀")
+    end
     tab(weight)
 
     if weight>2 and femgche(player, "敌对") then
@@ -721,7 +710,20 @@ function Main(player)
 end
 
 --end
-
+--这个回调函数会收到RemoteCall发送的信息
+--SenderID 发送者的ID
+--SenderName 发送者的名字
+--tInfo 数据表，里面是调用RemoteCall传的参数
+function OnRemoteCall(SenderID, SenderName, tInfo)
+    if SenderID ~= g_player.dwID then	--如果发送者不是自己
+        if tInfo[1] == "集火" then	--1对应RemoteCall的第一个参数
+            if tmount("离经易道|云裳心经|补天诀|相知") and buweianxing(10) then
+                skillEX("怖畏暗刑")
+            end
+            SetTarget(tInfo[2])	--2对应RemoteCall的第二个参数
+        end
+    end
+end
 
 --释放技能回调函数，任意对象释放技能时调用
 function OnCast(CasterID, dwSkillID, dwLevel, nPastFrame, tClass, tIDnX, nY, nZ)

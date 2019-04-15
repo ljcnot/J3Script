@@ -118,6 +118,20 @@ function tbuff(list)
     tbuffList = GetBuff(target)
     return GetBuffTime(tbuffList, list) > 0
 end
+function objBuff(obj,list)
+    if obj==nil then
+        return false
+    end
+    local objBuff = GetBuff(obj)
+    return GetBuffTime(objBuff, list) > 0
+end
+function objBufftime(obj,id)
+    if obj==nil then
+        return false
+    end
+    local objBuff = GetBuff(obj)
+    return GetBuffTime(objBuff, id)
+end
 function tbuffCS(list)
     if target==nil then
         return false
@@ -153,6 +167,10 @@ end
 function skillEX3(skillid)
     ---不打断当前读条
     Cast(skillid,true,false)
+end
+function skillEX4(skillid)
+    ---不打断当前读条
+    Cast(skillid,false,true)
 end
 function dis()
     if not target then
@@ -283,6 +301,14 @@ function tstate(desc)
     end
     local tstate = GetState(target)
     return string.find(desc, tstate) ~= nil
+end
+
+function objStatep(obj,desc)
+    if obj == nil then
+        return false
+    end
+    local objList = GetBuff(obj)
+    return GetTypeTime(objList, desc) > 0
 end
 function objState(obj, desc)
     if obj == nil then
@@ -686,6 +712,21 @@ function femgche(obj,relation)
     end
     return false
 end
+
+function countNotBuffByPart(obj,list,distance)
+    local count = 0
+    if obj ==nil then
+        return 0
+    end
+    --遍历队伍成员
+    for k, v in ipairs(GetTeamMember()) do
+        if IsPlayer(v.dwID) and IsParty(v) and GetDist(obj,v)<=distance and not objBuff(v,list) and objState(v, "重伤")==false  then
+            count = count+1
+        end
+    end
+    return count
+end
+
 function seeObjForPart(obj)
     local count = 0
     if obj ==nil then
@@ -802,7 +843,7 @@ function needTui(obj)
 end
 function toBack()
     ---自动绕背
-    if target and  GetDist(target) <=4 then
+    if target and  GetDist(target) <=3 then
         if IsBack(target) then
             MoveForwardStop()
         else
